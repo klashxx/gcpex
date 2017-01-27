@@ -7,7 +7,14 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"sync"
 )
+
+type result struct {
+	cmd    string
+	output []byte
+	path   string
+}
 
 type Command struct {
 	Profile string   `json:"profile"`
@@ -76,4 +83,8 @@ func main() {
 	defer close(done)
 
 	_, _ = dispatchCommands(done, c)
+
+	_ = make(chan result)
+	var wg sync.WaitGroup
+	wg.Add(*numRoutines)
 }
