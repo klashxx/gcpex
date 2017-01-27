@@ -7,13 +7,13 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
 	"sync"
 )
 
 type result struct {
-	cmd    string
-	output []byte
-	path   string
+	cmd  string
+	path string
 }
 
 type Command struct {
@@ -67,6 +67,24 @@ func dispatchCommands(done <-chan struct{}, c Commands) (<-chan Command, <-chan 
 	return commands, errc
 }
 
+func commandLauncher(done <-chan struct{}, commands <-chan Command, results chan<- result) {
+
+	for command := range commands {
+
+		path, err := exec.LookPath(command.Cmd)
+		if err != nil {
+			log.Println("Error -> Command:", command.Cmd, "Args:", command.Args, "Error:", err)
+			return
+		}
+
+		select {
+		case results <- result{command.Cmd, path}:
+		case <-done:
+			return
+		}
+	}
+}
+
 func main() {
 	flag.Parse()
 	if *execFile == "" {
@@ -82,9 +100,20 @@ func main() {
 	done := make(chan struct{})
 	defer close(done)
 
-	_, _ = dispatchCommands(done, c)
+	commands, _ := dispatchCommands(done, c)
 
-	_ = make(chan result)
+	results := make(chan result)
 	var wg sync.WaitGroup
 	wg.Add(*numRoutines)
+	for i := 0; i < *numRoutines; i++ {
+		go func() {
+			commandLauncher(done, commands, results)
+			wg.Done()
+		}()
+	}
+
+	go func() {
+		wg.Wait()
+		close(results)
+	}()
 }
