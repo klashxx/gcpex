@@ -15,6 +15,7 @@ type result struct {
 	cmd     string
 	path    string
 	success bool
+	pid     int
 }
 
 type Command struct {
@@ -69,6 +70,8 @@ func dispatchCommands(done <-chan struct{}, c Commands) (<-chan Command, <-chan 
 }
 
 func commandLauncher(done <-chan struct{}, commands <-chan Command, results chan<- result) {
+	var pid int
+
 	for command := range commands {
 		path, err := exec.LookPath(command.Cmd)
 		if err != nil {
@@ -77,8 +80,9 @@ func commandLauncher(done <-chan struct{}, commands <-chan Command, results chan
 		}
 
 		cmd := exec.Command(command.Cmd, command.Args...)
-
 		err = cmd.Start()
+		pid = cmd.Process.Pid
+
 		cmd.Wait()
 
 		if err != nil {
@@ -87,7 +91,7 @@ func commandLauncher(done <-chan struct{}, commands <-chan Command, results chan
 		}
 
 		select {
-		case results <- result{command.Cmd, path, cmd.ProcessState.Success()}:
+		case results <- result{command.Cmd, path, cmd.ProcessState.Success(), pid}:
 		case <-done:
 			return
 		}
