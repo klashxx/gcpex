@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -13,10 +14,11 @@ import (
 )
 
 type Execution struct {
-	Cmd     string
-	Path    string
-	Success bool
-	Pid     int
+	Cmd      string
+	Path     string
+	Success  bool
+	Pid      int
+	OutBytes []byte
 }
 
 type Command struct {
@@ -83,19 +85,29 @@ func commandLauncher(done <-chan struct{}, commands <-chan Command, executions c
 			execution.Cmd = command.Cmd
 
 			cmd := exec.Command(command.Cmd, command.Args...)
-			err = cmd.Start()
+			stdout, err := cmd.StdoutPipe()
 			if err != nil {
 				log.Println("Error -> Command:", command.Cmd, "Args:", command.Args, "Error:", err)
 			} else {
-				start := time.Now()
-				execution.Pid = cmd.Process.Pid
 
-				log.Println("Start -> PID:", execution.Pid, "Command:", command.Cmd, "Args:", command.Args)
+				err = cmd.Start()
+				if err != nil {
+					log.Println("Error -> Command:", command.Cmd, "Args:", command.Args, "Error:", err)
+				} else {
+					start := time.Now()
+					execution.Pid = cmd.Process.Pid
 
-				cmd.Wait()
-				duration := time.Since(start)
+					log.Println("Start -> PID:", execution.Pid, "Command:", command.Cmd, "Args:", command.Args)
 
-				log.Println("End   -> PID:", execution.Pid, "Command:", command.Cmd, "Args:", command.Args, "Duration", duration)
+					_, err = bufio.NewReader(stdout).Read(execution.OutBytes)
+					if err != nil {
+						log.Println("Error -> Command:", command.Cmd, "Args:", command.Args, "Error:", err)
+					} else {
+						cmd.Wait()
+						duration := time.Since(start)
+						log.Println("End   -> PID:", execution.Pid, "Command:", command.Cmd, "Args:", command.Args, "Duration", duration)
+					}
+				}
 			}
 		}
 
