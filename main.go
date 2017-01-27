@@ -124,10 +124,11 @@ func main() {
 
 	commands, errc := dispatchCommands(done, c)
 
-	executions := make(chan Execution)
-
 	var wg sync.WaitGroup
 	wg.Add(*numRoutines)
+
+	executions := make(chan Execution)
+
 	for i := 0; i < *numRoutines; i++ {
 		go func() {
 			commandLauncher(done, commands, executions)
