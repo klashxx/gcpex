@@ -81,14 +81,13 @@ func commandLauncher(done <-chan struct{}, commands <-chan Command, results chan
 
 		cmd := exec.Command(command.Cmd, command.Args...)
 		err = cmd.Start()
-		pid = cmd.Process.Pid
-
-		cmd.Wait()
-
 		if err != nil {
 			log.Println("Error -> Command:", command.Cmd, "Args:", command.Args, "Error:", err)
 			return
 		}
+
+		pid = cmd.Process.Pid
+		cmd.Wait()
 
 		select {
 		case results <- result{command.Cmd, path, cmd.ProcessState.Success(), pid}:
