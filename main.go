@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-type Result struct {
+type Execution struct {
 	Cmd     string
 	Path    string
 	Success bool
@@ -70,8 +70,8 @@ func dispatchCommands(done <-chan struct{}, c Commands) (<-chan Command, <-chan 
 	return commands, errc
 }
 
-func commandLauncher(done <-chan struct{}, commands <-chan Command, results chan<- Result) {
-	var result Result
+func commandLauncher(done <-chan struct{}, commands <-chan Command, executions chan<- Execution) {
+	var execution Execution
 
 	for command := range commands {
 		path, err := exec.LookPath(command.Cmd)
@@ -79,8 +79,8 @@ func commandLauncher(done <-chan struct{}, commands <-chan Command, results chan
 			log.Println("Error -> Command:", command.Cmd, "Args:", command.Args, "Error:", err)
 		} else {
 
-			result.Path = path
-			result.Cmd = command.Cmd
+			execution.Path = path
+			execution.Cmd = command.Cmd
 
 			cmd := exec.Command(command.Cmd, command.Args...)
 			err = cmd.Start()
@@ -88,19 +88,19 @@ func commandLauncher(done <-chan struct{}, commands <-chan Command, results chan
 				log.Println("Error -> Command:", command.Cmd, "Args:", command.Args, "Error:", err)
 			} else {
 				start := time.Now()
-				result.Pid = cmd.Process.Pid
+				execution.Pid = cmd.Process.Pid
 
-				log.Println("Start -> PID:", result.Pid, "Command:", command.Cmd, "Args:", command.Args)
+				log.Println("Start -> PID:", execution.Pid, "Command:", command.Cmd, "Args:", command.Args)
 
 				cmd.Wait()
 				duration := time.Since(start)
 
-				log.Println("End   -> PID:", result.Pid, "Command:", command.Cmd, "Args:", command.Args, "Duration", duration)
+				log.Println("End   -> PID:", execution.Pid, "Command:", command.Cmd, "Args:", command.Args, "Duration", duration)
 			}
 		}
 
 		select {
-		case results <- result:
+		case executions <- execution:
 		case <-done:
 			return
 		}
@@ -124,24 +124,24 @@ func main() {
 
 	commands, errc := dispatchCommands(done, c)
 
-	results := make(chan Result)
+	executions := make(chan Execution)
 
 	var wg sync.WaitGroup
 	wg.Add(*numRoutines)
 	for i := 0; i < *numRoutines; i++ {
 		go func() {
-			commandLauncher(done, commands, results)
+			commandLauncher(done, commands, executions)
 			wg.Done()
 		}()
 	}
 
 	go func() {
 		wg.Wait()
-		close(results)
+		close(executions)
 	}()
 
-	for r := range results {
-		log.Println(r)
+	for ex := range executions {
+		log.Println(ex)
 	}
 
 	if err := <-errc; err != nil {
