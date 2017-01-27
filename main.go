@@ -12,8 +12,9 @@ import (
 )
 
 type result struct {
-	cmd  string
-	path string
+	cmd     string
+	path    string
+	success bool
 }
 
 type Command struct {
@@ -68,17 +69,25 @@ func dispatchCommands(done <-chan struct{}, c Commands) (<-chan Command, <-chan 
 }
 
 func commandLauncher(done <-chan struct{}, commands <-chan Command, results chan<- result) {
-
 	for command := range commands {
-
 		path, err := exec.LookPath(command.Cmd)
 		if err != nil {
 			log.Println("Error -> Command:", command.Cmd, "Args:", command.Args, "Error:", err)
 			return
 		}
 
+		cmd := exec.Command(command.Cmd, command.Args...)
+
+		err = cmd.Start()
+		cmd.Wait()
+
+		if err != nil {
+			log.Println("Error -> Command:", command.Cmd, "Args:", command.Args, "Error:", err)
+			return
+		}
+
 		select {
-		case results <- result{command.Cmd, path}:
+		case results <- result{command.Cmd, path, cmd.ProcessState.Success()}:
 		case <-done:
 			return
 		}
@@ -103,6 +112,7 @@ func main() {
 	commands, _ := dispatchCommands(done, c)
 
 	results := make(chan result)
+
 	var wg sync.WaitGroup
 	wg.Add(*numRoutines)
 	for i := 0; i < *numRoutines; i++ {
@@ -116,4 +126,8 @@ func main() {
 		wg.Wait()
 		close(results)
 	}()
+
+	for r := range results {
+		log.Println(r)
+	}
 }
