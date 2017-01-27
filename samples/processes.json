@@ -1,0 +1,36 @@
+[
+   {
+      "profile":null,
+      "cmd":"dummy",
+      "args":[
+         "arg1",
+         "arg2"
+      ]
+   },
+   {
+      "profile":null,
+      "cmd":"sleep",
+      "args":[
+         "5"
+      ]
+   },
+   {
+      "profile":null,
+      "cmd":"date",
+      "args":[]
+   },
+   {
+      "profile":null,
+      "cmd":"sleep",
+      "args":[
+         "10"
+      ]
+   },
+   {
+      "profile":null,
+      "cmd":"sleep",
+      "args":[
+         "15"
+      ]
+   }
+]
