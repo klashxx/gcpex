@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"flag"
 	"io/ioutil"
 	"log"
@@ -37,6 +38,28 @@ func deserializeJSON(execFile string) (c Commands, err error) {
 	return c, nil
 }
 
+func dispatchCommands(done <-chan struct{}, c Commands) (<-chan Command, <-chan error) {
+	commands := make(chan Command)
+	errc := make(chan error, 1)
+
+	go func() {
+		defer close(commands)
+
+		errc <- func() error {
+			for _, p := range c {
+				select {
+				case commands <- p:
+				case <-done:
+					return errors.New("dispatch canceled")
+				}
+			}
+			return nil
+		}()
+	}()
+
+	return commands, errc
+}
+
 func main() {
 	flag.Parse()
 	if *execFile == "" {
@@ -44,11 +67,13 @@ func main() {
 		os.Exit(5)
 	}
 
-	_, err := deserializeJSON(*execFile)
+	c, err := deserializeJSON(*execFile)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	done := make(chan struct{})
 	defer close(done)
+
+	_, _ = dispatchCommands(done, c)
 }
