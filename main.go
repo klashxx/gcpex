@@ -12,11 +12,11 @@ import (
 	"time"
 )
 
-type result struct {
-	cmd     string
-	path    string
-	success bool
-	pid     int
+type Result struct {
+	Cmd     string
+	Path    string
+	Success bool
+	Pid     int
 }
 
 type Command struct {
@@ -70,7 +70,7 @@ func dispatchCommands(done <-chan struct{}, c Commands) (<-chan Command, <-chan 
 	return commands, errc
 }
 
-func commandLauncher(done <-chan struct{}, commands <-chan Command, results chan<- result) {
+func commandLauncher(done <-chan struct{}, commands <-chan Command, results chan<- Result) {
 	var pid int
 
 	for command := range commands {
@@ -98,7 +98,7 @@ func commandLauncher(done <-chan struct{}, commands <-chan Command, results chan
 		log.Println("End   -> PID:", pid, "Command:", command.Cmd, "Args:", command.Args, "Duration", duration)
 
 		select {
-		case results <- result{command.Cmd, path, cmd.ProcessState.Success(), pid}:
+		case results <- Result{command.Cmd, path, cmd.ProcessState.Success(), pid}:
 		case <-done:
 			return
 		}
@@ -122,7 +122,7 @@ func main() {
 
 	commands, errc := dispatchCommands(done, c)
 
-	results := make(chan result)
+	results := make(chan Result)
 
 	var wg sync.WaitGroup
 	wg.Add(*numRoutines)
