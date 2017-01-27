@@ -19,7 +19,7 @@ type Commands []Command
 
 var (
 	author      = "klashxx@gmail.com"
-	execFile    = flag.String("exec", "", "cmd JSON file. [obligatory]")
+	execFile    = flag.String("exec", "", "cmd JSON file. [mandatory]")
 	numRoutines = flag.Int("routines", 5, "max parallel execution routines")
 )
 
@@ -48,4 +48,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	done := make(chan struct{})
+	defer close(done)
 }
