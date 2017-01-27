@@ -109,7 +109,7 @@ func main() {
 	done := make(chan struct{})
 	defer close(done)
 
-	commands, _ := dispatchCommands(done, c)
+	commands, errc := dispatchCommands(done, c)
 
 	results := make(chan result)
 
@@ -129,5 +129,9 @@ func main() {
 
 	for r := range results {
 		log.Println(r)
+	}
+
+	if err := <-errc; err != nil {
+		log.Println(err)
 	}
 }
