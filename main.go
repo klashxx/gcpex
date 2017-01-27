@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"sync"
+	"time"
 )
 
 type result struct {
@@ -85,12 +86,16 @@ func commandLauncher(done <-chan struct{}, commands <-chan Command, results chan
 			log.Println("Error -> Command:", command.Cmd, "Args:", command.Args, "Error:", err)
 			return
 		}
+		start := time.Now()
 
 		pid = cmd.Process.Pid
+
 		log.Println("Start -> PID:", pid, "Command:", command.Cmd, "Args:", command.Args)
 
 		cmd.Wait()
-		log.Println("End   -> PID:", pid, "Command:", command.Cmd, "Args:", command.Args)
+		duration := time.Since(start)
+
+		log.Println("End   -> PID:", pid, "Command:", command.Cmd, "Args:", command.Args, "Duration", duration)
 
 		select {
 		case results <- result{command.Cmd, path, cmd.ProcessState.Success(), pid}:
