@@ -71,34 +71,36 @@ func dispatchCommands(done <-chan struct{}, c Commands) (<-chan Command, <-chan 
 }
 
 func commandLauncher(done <-chan struct{}, commands <-chan Command, results chan<- Result) {
-	var pid int
+	var result Result
 
 	for command := range commands {
 		path, err := exec.LookPath(command.Cmd)
 		if err != nil {
 			log.Println("Error -> Command:", command.Cmd, "Args:", command.Args, "Error:", err)
-			return
+		} else {
+
+			result.Path = path
+			result.Cmd = command.Cmd
+
+			cmd := exec.Command(command.Cmd, command.Args...)
+			err = cmd.Start()
+			if err != nil {
+				log.Println("Error -> Command:", command.Cmd, "Args:", command.Args, "Error:", err)
+			} else {
+				start := time.Now()
+				result.Pid = cmd.Process.Pid
+
+				log.Println("Start -> PID:", result.Pid, "Command:", command.Cmd, "Args:", command.Args)
+
+				cmd.Wait()
+				duration := time.Since(start)
+
+				log.Println("End   -> PID:", result.Pid, "Command:", command.Cmd, "Args:", command.Args, "Duration", duration)
+			}
 		}
-
-		cmd := exec.Command(command.Cmd, command.Args...)
-		err = cmd.Start()
-		if err != nil {
-			log.Println("Error -> Command:", command.Cmd, "Args:", command.Args, "Error:", err)
-			return
-		}
-		start := time.Now()
-
-		pid = cmd.Process.Pid
-
-		log.Println("Start -> PID:", pid, "Command:", command.Cmd, "Args:", command.Args)
-
-		cmd.Wait()
-		duration := time.Since(start)
-
-		log.Println("End   -> PID:", pid, "Command:", command.Cmd, "Args:", command.Args, "Duration", duration)
 
 		select {
-		case results <- Result{command.Cmd, path, cmd.ProcessState.Success(), pid}:
+		case results <- result:
 		case <-done:
 			return
 		}
