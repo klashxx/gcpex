@@ -20,6 +20,7 @@ type Execution struct {
 	Success  bool
 	Pid      int
 	OutBytes []byte
+	Duration int
 }
 
 type Command struct {
@@ -105,9 +106,9 @@ func commandLauncher(done <-chan struct{}, commands <-chan Command, executions c
 						log.Println("Error -> Command:", e.Cmd, "Args:", e.Args, "Error:", err)
 					} else {
 						cmd.Wait()
-						duration := time.Since(start)
+						e.Duration = int(time.Since(start).Seconds())
 						e.Success = cmd.ProcessState.Success()
-						log.Println("End   -> PID:", e.Pid, "Command:", e.Cmd, "Args:", e.Args, "Duration", duration)
+						log.Println("End   -> PID:", e.Pid, "Command:", e.Cmd, "Args:", e.Args, "Duration", e.Duration)
 					}
 				}
 			}
