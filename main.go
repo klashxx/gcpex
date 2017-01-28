@@ -112,18 +112,7 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 	}
 }
 
-func main() {
-	flag.Parse()
-	if *execFile == "" {
-		flag.PrintDefaults()
-		os.Exit(5)
-	}
-
-	c, err := deserializeJSON(*execFile)
-	if err != nil {
-		log.Fatal(err)
-	}
-
+func controller(c Commands) {
 	done := make(chan struct{})
 	defer close(done)
 
@@ -154,4 +143,20 @@ func main() {
 	if err := <-errc; err != nil {
 		log.Println(err)
 	}
+}
+
+func main() {
+	flag.Parse()
+	if *execFile == "" {
+		flag.PrintDefaults()
+		os.Exit(5)
+	}
+
+	c, err := deserializeJSON(*execFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	controller(c)
+
 }
