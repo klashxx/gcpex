@@ -75,56 +75,48 @@ func dispatchCommands(done <-chan struct{}, c Commands) (<-chan Command, <-chan 
 	return commands, errc
 }
 
-func commandLauncher(done <-chan struct{}, commands <-chan Command, executions chan<- Execution) {
+func commandDigester(done <-chan struct{}, commands <-chan Command, executions chan<- Execution) {
 	var e Execution
 
 	for c := range commands {
-		e.Cmd = c.Cmd
-		e.Args = c.Args
 		path, err := exec.LookPath(c.Cmd)
 		if err != nil {
 			e.Error = err
-			executions <- e
+		} else {
+
+			e.Path = path
+			e.Cmd = c.Cmd
+			e.Args = c.Args
+
+			cmd := exec.Command(e.Cmd, e.Args...)
+			stdout, err := cmd.StdoutPipe()
+			if err != nil {
+				e.Error = err
+			} else {
+				err = cmd.Start()
+				if err != nil {
+					e.Error = err
+				} else {
+					start := time.Now()
+					e.Pid = cmd.Process.Pid
+					log.Println("Start -> PID:", e.Pid, "Command:", e.Cmd, "Args:", e.Args)
+					_, err = bufio.NewReader(stdout).Read(e.OutBytes)
+					if err != nil {
+						e.Error = err
+					} else {
+						cmd.Wait()
+						e.Duration = int(time.Since(start).Seconds())
+						e.Success = cmd.ProcessState.Success()
+					}
+				}
+			}
+		}
+
+		select {
+		case executions <- e:
+		case <-done:
 			return
 		}
-		e.Path = path
-
-		cmd := exec.Command(e.Cmd, e.Args...)
-		stdout, err := cmd.StdoutPipe()
-		if err != nil {
-			e.Error = err
-			executions <- e
-			return
-		}
-
-		err = cmd.Start()
-		if err != nil {
-			e.Error = err
-			executions <- e
-			return
-		}
-		start := time.Now()
-		e.Pid = cmd.Process.Pid
-
-		log.Println("Start -> PID:", e.Pid, "Command:", e.Cmd, "Args:", e.Args, e.Error)
-
-		_, err = bufio.NewReader(stdout).Read(e.OutBytes)
-		if err != nil {
-			e.Error = err
-			executions <- e
-			return
-		}
-		cmd.Wait()
-		log.Println(e.Cmd, e.Error)
-		e.Duration = int(time.Since(start).Seconds())
-		e.Success = cmd.ProcessState.Success()
-
-	}
-
-	select {
-	case executions <- e:
-	case <-done:
-		return
 	}
 }
 
@@ -152,7 +144,7 @@ func main() {
 
 	for i := 0; i < *numRoutines; i++ {
 		go func() {
-			commandLauncher(done, commands, executions)
+			commandDigester(done, commands, executions)
 			wg.Done()
 		}()
 	}
@@ -163,7 +155,7 @@ func main() {
 	}()
 
 	for e := range executions {
-		log.Println("End   -> PID:", e.Pid, "Command:", e.Cmd, "Args:", e.Args, "Duration", e.Duration, "Error", e.Error)
+		log.Println(e)
 	}
 
 	if err := <-errc; err != nil {
