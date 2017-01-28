@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bufio"
+	"bytes"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -19,9 +19,9 @@ type Execution struct {
 	Args     []string
 	Success  bool
 	Pid      int
-	OutBytes []byte
 	Duration int
 	Error    error
+	Output   bytes.Buffer
 }
 
 type Command struct {
@@ -83,32 +83,24 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 		if err != nil {
 			e.Error = err
 		} else {
-
 			e.Path = path
 			e.Cmd = c.Cmd
 			e.Args = c.Args
 
 			cmd := exec.Command(e.Cmd, e.Args...)
-			stdout, err := cmd.StdoutPipe()
+			cmd.Stdout = &e.Output
+
+			err = cmd.Start()
 			if err != nil {
 				e.Error = err
 			} else {
-				err = cmd.Start()
-				if err != nil {
-					e.Error = err
-				} else {
-					start := time.Now()
-					e.Pid = cmd.Process.Pid
-					log.Println("Start -> PID:", e.Pid, "Command:", e.Cmd, "Args:", e.Args)
-					_, err = bufio.NewReader(stdout).Read(e.OutBytes)
-					if err != nil {
-						e.Error = err
-					} else {
-						cmd.Wait()
-						e.Duration = int(time.Since(start).Seconds())
-						e.Success = cmd.ProcessState.Success()
-					}
-				}
+				start := time.Now()
+				e.Pid = cmd.Process.Pid
+				log.Println("Start -> PID:", e.Pid, "Command:", e.Cmd, "Args:", e.Args)
+
+				cmd.Wait()
+				e.Duration = int(time.Since(start).Seconds())
+				e.Success = cmd.ProcessState.Success()
 			}
 		}
 
@@ -156,6 +148,7 @@ func main() {
 
 	for e := range executions {
 		log.Println(e)
+		log.Println(e.Output.String())
 	}
 
 	if err := <-errc; err != nil {
