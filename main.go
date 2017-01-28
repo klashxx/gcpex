@@ -16,6 +16,7 @@ import (
 type Execution struct {
 	Cmd      string
 	Path     string
+	Args     []string
 	Success  bool
 	Pid      int
 	OutBytes []byte
@@ -73,46 +74,46 @@ func dispatchCommands(done <-chan struct{}, c Commands) (<-chan Command, <-chan 
 }
 
 func commandLauncher(done <-chan struct{}, commands <-chan Command, executions chan<- Execution) {
-	var execution Execution
+	var e Execution
 
-	for command := range commands {
-		path, err := exec.LookPath(command.Cmd)
+	for c := range commands {
+		path, err := exec.LookPath(c.Cmd)
 		if err != nil {
-			log.Println("Error -> Command:", command.Cmd, "Args:", command.Args, "Error:", err)
+			log.Println("Error -> Command:", c.Cmd, "Args:", c.Args, "Error:", err)
 		} else {
 
-			execution.Path = path
-			execution.Cmd = command.Cmd
+			e.Path = path
+			e.Cmd = c.Cmd
+			e.Args = c.Args
 
-			cmd := exec.Command(command.Cmd, command.Args...)
+			cmd := exec.Command(c.Cmd, c.Args...)
 			stdout, err := cmd.StdoutPipe()
 			if err != nil {
-				log.Println("Error -> Command:", command.Cmd, "Args:", command.Args, "Error:", err)
+				log.Println("Error -> Command:", e.Cmd, "Args:", e.Args, "Error:", err)
 			} else {
-
 				err = cmd.Start()
 				if err != nil {
-					log.Println("Error -> Command:", command.Cmd, "Args:", command.Args, "Error:", err)
+					log.Println("Error -> Command:", e.Cmd, "Args:", e.Args, "Error:", err)
 				} else {
 					start := time.Now()
-					execution.Pid = cmd.Process.Pid
+					e.Pid = cmd.Process.Pid
 
-					log.Println("Start -> PID:", execution.Pid, "Command:", command.Cmd, "Args:", command.Args)
+					log.Println("Start -> PID:", e.Pid, "Command:", e.Cmd, "Args:", e.Args)
 
-					_, err = bufio.NewReader(stdout).Read(execution.OutBytes)
+					_, err = bufio.NewReader(stdout).Read(e.OutBytes)
 					if err != nil {
-						log.Println("Error -> Command:", command.Cmd, "Args:", command.Args, "Error:", err)
+						log.Println("Error -> Command:", e.Cmd, "Args:", e.Args, "Error:", err)
 					} else {
 						cmd.Wait()
 						duration := time.Since(start)
-						log.Println("End   -> PID:", execution.Pid, "Command:", command.Cmd, "Args:", command.Args, "Duration", duration)
+						log.Println("End   -> PID:", e.Pid, "Command:", e.Cmd, "Args:", e.Args, "Duration", duration)
 					}
 				}
 			}
 		}
 
 		select {
-		case executions <- execution:
+		case executions <- e:
 		case <-done:
 			return
 		}
