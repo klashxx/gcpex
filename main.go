@@ -106,6 +106,7 @@ func commandLauncher(done <-chan struct{}, commands <-chan Command, executions c
 					} else {
 						cmd.Wait()
 						duration := time.Since(start)
+						e.Success = cmd.ProcessState.Success()
 						log.Println("End   -> PID:", e.Pid, "Command:", e.Cmd, "Args:", e.Args, "Duration", duration)
 					}
 				}
