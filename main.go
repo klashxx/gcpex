@@ -21,6 +21,7 @@ type Execution struct {
 	Pid      int
 	OutBytes []byte
 	Duration int
+	Error    error
 }
 
 type Command struct {
@@ -78,47 +79,52 @@ func commandLauncher(done <-chan struct{}, commands <-chan Command, executions c
 	var e Execution
 
 	for c := range commands {
+		e.Cmd = c.Cmd
+		e.Args = c.Args
 		path, err := exec.LookPath(c.Cmd)
 		if err != nil {
-			log.Println("Error -> Command:", c.Cmd, "Args:", c.Args, "Error:", err)
-		} else {
-
-			e.Path = path
-			e.Cmd = c.Cmd
-			e.Args = c.Args
-
-			cmd := exec.Command(c.Cmd, c.Args...)
-			stdout, err := cmd.StdoutPipe()
-			if err != nil {
-				log.Println("Error -> Command:", e.Cmd, "Args:", e.Args, "Error:", err)
-			} else {
-				err = cmd.Start()
-				if err != nil {
-					log.Println("Error -> Command:", e.Cmd, "Args:", e.Args, "Error:", err)
-				} else {
-					start := time.Now()
-					e.Pid = cmd.Process.Pid
-
-					log.Println("Start -> PID:", e.Pid, "Command:", e.Cmd, "Args:", e.Args)
-
-					_, err = bufio.NewReader(stdout).Read(e.OutBytes)
-					if err != nil {
-						log.Println("Error -> Command:", e.Cmd, "Args:", e.Args, "Error:", err)
-					} else {
-						cmd.Wait()
-						e.Duration = int(time.Since(start).Seconds())
-						e.Success = cmd.ProcessState.Success()
-						log.Println("End   -> PID:", e.Pid, "Command:", e.Cmd, "Args:", e.Args, "Duration", e.Duration)
-					}
-				}
-			}
-		}
-
-		select {
-		case executions <- e:
-		case <-done:
+			e.Error = err
+			executions <- e
 			return
 		}
+		e.Path = path
+
+		cmd := exec.Command(e.Cmd, e.Args...)
+		stdout, err := cmd.StdoutPipe()
+		if err != nil {
+			e.Error = err
+			executions <- e
+			return
+		}
+
+		err = cmd.Start()
+		if err != nil {
+			e.Error = err
+			executions <- e
+			return
+		}
+		start := time.Now()
+		e.Pid = cmd.Process.Pid
+
+		log.Println("Start -> PID:", e.Pid, "Command:", e.Cmd, "Args:", e.Args, e.Error)
+
+		_, err = bufio.NewReader(stdout).Read(e.OutBytes)
+		if err != nil {
+			e.Error = err
+			executions <- e
+			return
+		}
+		cmd.Wait()
+		log.Println(e.Cmd, e.Error)
+		e.Duration = int(time.Since(start).Seconds())
+		e.Success = cmd.ProcessState.Success()
+
+	}
+
+	select {
+	case executions <- e:
+	case <-done:
+		return
 	}
 }
 
@@ -156,8 +162,8 @@ func main() {
 		close(executions)
 	}()
 
-	for ex := range executions {
-		log.Println(ex)
+	for e := range executions {
+		log.Println("End   -> PID:", e.Pid, "Command:", e.Cmd, "Args:", e.Args, "Duration", e.Duration, "Error", e.Error)
 	}
 
 	if err := <-errc; err != nil {
