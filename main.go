@@ -20,8 +20,9 @@ type Execution struct {
 	Success  bool
 	Pid      int
 	Duration int
-	Error    error
-	Output   bytes.Buffer
+	Error    string
+	Stdout   bytes.Buffer
+	Stderr   bytes.Buffer
 }
 
 type Command struct {
@@ -35,9 +36,14 @@ type Commands []Command
 
 var (
 	author      = "klashxx@gmail.com"
-	execFile    = flag.String("exec", "", "cmd JSON file. [mandatory]")
-	numRoutines = flag.Int("routines", 5, "max parallel execution routines")
+	execFile    string
+	numRoutines int
 )
+
+func init() {
+	flag.StringVar(&execFile, "exec", "", "cmd JSON file. [mandatory]")
+	flag.IntVar(&numRoutines, "routines", 5, "max parallel execution routines")
+}
 
 func deserializeJSON(execFile string) (c Commands, err error) {
 	rawJSON, err := ioutil.ReadFile(execFile)
@@ -81,18 +87,19 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 	for c := range commands {
 		path, err := exec.LookPath(c.Cmd)
 		if err != nil {
-			e.Error = err
+			e.Error = err.Error()
 		} else {
 			e.Path = path
 			e.Cmd = c.Cmd
 			e.Args = c.Args
 
 			cmd := exec.Command(e.Cmd, e.Args...)
-			cmd.Stdout = &e.Output
+			cmd.Stdout = &e.Stdout
+			cmd.Stderr = &e.Stderr
 
 			err = cmd.Start()
 			if err != nil {
-				e.Error = err
+				e.Error = err.Error()
 			} else {
 				start := time.Now()
 				e.Pid = cmd.Process.Pid
@@ -112,18 +119,20 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 	}
 }
 
-func controller(c Commands) {
+func controller(c Commands) bool {
+	success := true
+
 	done := make(chan struct{})
 	defer close(done)
 
 	commands, errc := dispatchCommands(done, c)
 
 	var wg sync.WaitGroup
-	wg.Add(*numRoutines)
+	wg.Add(numRoutines)
 
 	executions := make(chan Execution)
 
-	for i := 0; i < *numRoutines; i++ {
+	for i := 0; i < numRoutines; i++ {
 		go func() {
 			commandDigester(done, commands, executions)
 			wg.Done()
@@ -137,26 +146,32 @@ func controller(c Commands) {
 
 	for e := range executions {
 		log.Println(e)
-		log.Println(e.Output.String())
+		log.Println(e.Stdout.String())
+		if !e.Success {
+			success = false
+		}
 	}
 
 	if err := <-errc; err != nil {
 		log.Println(err)
+		success = false
 	}
+
+	return success
 }
 
 func main() {
 	flag.Parse()
-	if *execFile == "" {
+	if execFile == "" {
 		flag.PrintDefaults()
 		os.Exit(5)
 	}
 
-	c, err := deserializeJSON(*execFile)
+	c, err := deserializeJSON(execFile)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	controller(c)
+	_ = controller(c)
 
 }
