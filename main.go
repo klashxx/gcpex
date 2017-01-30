@@ -73,14 +73,16 @@ func IsUsable(pathLog string, overWrite bool) error {
 
 func streamToFile(l *os.File, outPipe io.ReadCloser, tag string) error {
 	var err error
+	var buf *bytes.Buffer
 	var lock sync.Mutex
 	block := bytes.Buffer{}
 
 	if tag != "" {
-		buf := bytes.NewBufferString(tag)
+		buf = bytes.NewBufferString(tag)
 		buf.WriteTo(l)
 	}
 
+	bufC := 0
 	end := make(chan error)
 	go func() {
 		var buf [1024]byte
@@ -89,6 +91,7 @@ func streamToFile(l *os.File, outPipe io.ReadCloser, tag string) error {
 		for err == nil {
 			n, err = outPipe.Read(buf[:])
 			if n > 0 {
+				bufC++
 				lock.Lock()
 				block.Write(buf[:n])
 				lock.Unlock()
@@ -107,6 +110,11 @@ func streamToFile(l *os.File, outPipe io.ReadCloser, tag string) error {
 		}
 	}
 	block.WriteTo(l)
+
+	if tag != "" && bufC == 0 {
+		buf = bytes.NewBufferString("<nil>\n")
+		buf.WriteTo(l)
+	}
 
 	if err == io.EOF {
 		return nil
@@ -156,6 +164,8 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 		var e Execution
 		var cmd *exec.Cmd
 		var stdoutPipe io.ReadCloser
+		var stderrPipe io.ReadCloser
+
 		var l *os.File
 		var start time.Time
 
@@ -193,6 +203,10 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 				if err != nil {
 					e.Error = append(e.Error, err)
 				}
+				stderrPipe, err = cmd.StderrPipe()
+				if err != nil {
+					e.Error = append(e.Error, err)
+				}
 			}
 		}
 
@@ -210,6 +224,10 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 
 			if e.Log != "" {
 				err = streamToFile(l, stdoutPipe, "STDOUT:\n=======\n\n")
+				if err != nil {
+					e.Error = append(e.Error, err)
+				}
+				err = streamToFile(l, stderrPipe, "\nSTDERR:\n=======\n\n")
 				if err != nil {
 					e.Error = append(e.Error, err)
 				}
