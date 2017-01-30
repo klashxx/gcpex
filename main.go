@@ -16,18 +16,20 @@ import (
 type Execution struct {
 	Cmd      string
 	Path     string
+	Env      []string
 	Args     []string
 	Success  bool
 	Pid      int
 	Duration int
 	Error    []error
+	Log      string
 }
 
 type Command struct {
-	Profile string   `json:"profile"`
-	Cmd     string   `json:"cmd"`
-	Args    []string `json:"args"`
-	Log     string   `json:"log"`
+	Cmd  string   `json:"cmd"`
+	Args []string `json:"args"`
+	Env  []string `json:"env"`
+	Log  string   `json:"log"`
 }
 
 type Commands []Command
