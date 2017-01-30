@@ -103,9 +103,9 @@ func dispatchCommands(done <-chan struct{}, c Commands) (<-chan Command, <-chan 
 }
 
 func commandDigester(done <-chan struct{}, commands <-chan Command, executions chan<- Execution) {
-	var e Execution
 
 	for c := range commands {
+		var e Execution
 		path, err := exec.LookPath(c.Cmd)
 		if err != nil {
 			e.Error = err.Error()
