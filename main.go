@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path"
 	"sync"
 	"time"
 )
@@ -43,6 +44,26 @@ var (
 func init() {
 	flag.StringVar(&execFile, "exec", "", "cmd JSON file. [mandatory]")
 	flag.IntVar(&numRoutines, "routines", 5, "max parallel execution routines")
+}
+
+func IsUsable(pathLog string, overWrite bool) error {
+
+	_, err := os.Stat(pathLog)
+	if os.IsExist(err) && !overWrite {
+		return errors.New("log file exists")
+	}
+
+	_, err = os.Stat(path.Dir(pathLog))
+
+	if os.IsNotExist(err) {
+		return errors.New("base dirlog directory does not exists")
+	}
+
+	if os.IsPermission(err) {
+		return errors.New("not enough permissions over base dirlog directory")
+	}
+
+	return nil
 }
 
 func deserializeJSON(execFile string) (c Commands, err error) {
