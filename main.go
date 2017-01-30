@@ -94,8 +94,6 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 			e.Args = c.Args
 
 			cmd := exec.Command(e.Cmd, e.Args...)
-			cmd.Stdout = &e.Stdout
-			cmd.Stderr = &e.Stderr
 
 			err = cmd.Start()
 			if err != nil {
