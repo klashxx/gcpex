@@ -13,6 +13,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 )
@@ -315,7 +316,15 @@ func main() {
 	resEx, err := controller(c)
 
 	for _, ex := range resEx {
-		fmt.Println(ex)
+		fmt.Println(strings.Repeat("-", 80))
+		fmt.Println("PID: ", ex.Pid)
+		fmt.Println("Success: ", ex.Success)
+		fmt.Println("Cmd: ", ex.Cmd)
+		fmt.Println("Args: ", ex.Args)
+		fmt.Println("Path: ", ex.Path)
+		fmt.Println("Duration: ", ex.Duration)
+		fmt.Println("Errors: ", ex.Errors)
+		fmt.Println("Log: ", ex.Log)
 	}
 
 	if err != nil {
