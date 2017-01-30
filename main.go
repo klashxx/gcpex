@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bufio"
+	"bytes"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -112,8 +112,11 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 	for c := range commands {
 		var e Execution
 		var cmd *exec.Cmd
-		var output *bufio.Reader
+		var stdoutPipe io.ReadCloser
 		var l *os.File
+
+		var lock sync.Mutex
+		block := bytes.Buffer{}
 
 		e.Cmd = c.Cmd
 		e.Args = c.Args
@@ -145,8 +148,7 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 			cmd = exec.Command(e.Cmd, e.Args...)
 
 			if e.Log != "" {
-				stdoutPipe, _ := cmd.StdoutPipe()
-				output = bufio.NewReader(stdoutPipe)
+				stdoutPipe, _ = cmd.StdoutPipe()
 			}
 
 			err = cmd.Start()
@@ -163,12 +165,33 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 			log.Println("Start -> Cmd:", e.Cmd, "Args:", e.Args, "PID:", e.Pid)
 
 			if e.Log != "" {
-				var buf = make([]byte, 2048, 2048)
-				count, err := output.Read(buf)
-				for count > 0 && err != io.EOF {
-					l.Write(buf)
-					count, err = output.Read(buf)
+
+				end := make(chan error)
+				go func() {
+					var buf [1024]byte
+					var err error
+					var n int
+					for err == nil {
+						n, err = stdoutPipe.Read(buf[:])
+						if n > 0 {
+							lock.Lock()
+							block.Write(buf[:n])
+							lock.Unlock()
+						}
+					}
+					end <- err
+				}()
+
+				for err == nil {
+					select {
+					case err = <-end:
+					default:
+						lock.Lock()
+						block.WriteTo(l)
+						lock.Unlock()
+					}
 				}
+				block.WriteTo(l)
 			}
 
 			cmd.Wait()
