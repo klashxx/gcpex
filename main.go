@@ -71,10 +71,15 @@ func IsUsable(pathLog string, overWrite bool) error {
 	return nil
 }
 
-func streamToFile(l *os.File, outPipe io.ReadCloser) error {
+func streamToFile(l *os.File, outPipe io.ReadCloser, tag string) error {
 	var err error
 	var lock sync.Mutex
 	block := bytes.Buffer{}
+
+	if tag != "" {
+		buf := bytes.NewBufferString(tag)
+		buf.WriteTo(l)
+	}
 
 	end := make(chan error)
 	go func() {
@@ -204,7 +209,7 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 			log.Println("Start -> Cmd:", e.Cmd, "Args:", e.Args, "PID:", e.Pid)
 
 			if e.Log != "" {
-				err = streamToFile(l, stdoutPipe)
+				err = streamToFile(l, stdoutPipe, "STDOUT:\n=======\n\n")
 				if err != nil {
 					e.Error = append(e.Error, err)
 				}
