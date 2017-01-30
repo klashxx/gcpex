@@ -26,6 +26,8 @@ type Execution struct {
 	Log      string
 }
 
+type Executions []Execution
+
 type Command struct {
 	Cmd  string   `json:"cmd"`
 	Args []string `json:"args"`
@@ -149,7 +151,7 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 	}
 }
 
-func controller(c Commands) bool {
+func controller(c Commands) (x Executions, err error) {
 	success := true
 
 	done := make(chan struct{})
@@ -175,7 +177,7 @@ func controller(c Commands) bool {
 	}()
 
 	for e := range executions {
-		log.Println(e)
+		x = append(x, e)
 		if !e.Success {
 			success = false
 		}
@@ -186,7 +188,11 @@ func controller(c Commands) bool {
 		success = false
 	}
 
-	return success
+	if !success {
+		return x, errors.New("commands execution failed")
+	}
+
+	return x, nil
 }
 
 func main() {
@@ -201,6 +207,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	_ = controller(c)
+	resEx, err := controller(c)
+	if err != nil {
+		log.Println(err)
+	}
 
+	for _, ex := range resEx {
+		log.Println(ex)
+	}
 }
