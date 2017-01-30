@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"sync"
 	"time"
 )
@@ -105,28 +106,39 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 
 	for c := range commands {
 		var e Execution
+		var cmd *exec.Cmd
+
+		e.Cmd = c.Cmd
+		e.Args = c.Args
+		e.Env = c.Env
+
 		path, err := exec.LookPath(c.Cmd)
 		if err != nil {
 			e.Error = append(e.Error, err)
-		} else {
-			e.Path = path
-			e.Cmd = c.Cmd
-			e.Args = c.Args
+		}
 
-			cmd := exec.Command(e.Cmd, e.Args...)
+		if len(e.Error) == 0 {
+			e.Path = filepath.Clean(path)
+			cmd = exec.Command(e.Cmd, e.Args...)
 
 			err = cmd.Start()
 			if err != nil {
 				e.Error = append(e.Error, err)
-			} else {
-				start := time.Now()
-				e.Pid = cmd.Process.Pid
-				log.Println("Start -> PID:", e.Pid, "Command:", e.Cmd, "Args:", e.Args)
-
-				cmd.Wait()
-				e.Duration = int(time.Since(start).Seconds())
-				e.Success = cmd.ProcessState.Success()
 			}
+		}
+
+		if len(e.Error) > 0 {
+			log.Println("ERROR -> Cmd:", e.Cmd, "Args:", e.Args, "Error:", e.Error)
+
+		} else {
+			start := time.Now()
+			e.Pid = cmd.Process.Pid
+			log.Println("Start -> Cmd:", e.Cmd, "Args:", e.Args, "PID:", e.Pid)
+
+			cmd.Wait()
+			e.Duration = int(time.Since(start).Seconds())
+			e.Success = cmd.ProcessState.Success()
+			log.Println("End   -> Cmd:", e.Cmd, "Args:", e.Args, "PID:", e.Pid, "Success:", e.Success)
 		}
 
 		select {
