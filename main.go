@@ -71,6 +71,44 @@ func IsUsable(pathLog string, overWrite bool) error {
 	return nil
 }
 
+func streamToFile(l *os.File, outPipe io.ReadCloser) error {
+	var err error
+	var lock sync.Mutex
+	block := bytes.Buffer{}
+
+	end := make(chan error)
+	go func() {
+		var buf [1024]byte
+		var err error
+		var n int
+		for err == nil {
+			n, err = outPipe.Read(buf[:])
+			if n > 0 {
+				lock.Lock()
+				block.Write(buf[:n])
+				lock.Unlock()
+			}
+		}
+		end <- err
+	}()
+
+	for err == nil {
+		select {
+		case err = <-end:
+		default:
+			lock.Lock()
+			block.WriteTo(l)
+			lock.Unlock()
+		}
+	}
+	block.WriteTo(l)
+
+	if err == io.EOF {
+		return nil
+	}
+	return err
+}
+
 func deserializeJSON(execFile string) (c Commands, err error) {
 	rawJSON, err := ioutil.ReadFile(execFile)
 	if err != nil {
@@ -114,9 +152,6 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 		var cmd *exec.Cmd
 		var stdoutPipe io.ReadCloser
 		var l *os.File
-
-		var lock sync.Mutex
-		block := bytes.Buffer{}
 
 		e.Cmd = c.Cmd
 		e.Args = c.Args
@@ -170,32 +205,10 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 			log.Println("Start -> Cmd:", e.Cmd, "Args:", e.Args, "PID:", e.Pid)
 
 			if e.Log != "" {
-				end := make(chan error)
-				go func() {
-					var buf [1024]byte
-					var err error
-					var n int
-					for err == nil {
-						n, err = stdoutPipe.Read(buf[:])
-						if n > 0 {
-							lock.Lock()
-							block.Write(buf[:n])
-							lock.Unlock()
-						}
-					}
-					end <- err
-				}()
-
-				for err == nil {
-					select {
-					case err = <-end:
-					default:
-						lock.Lock()
-						block.WriteTo(l)
-						lock.Unlock()
-					}
+				err = streamToFile(l, stdoutPipe)
+				if err != nil {
+					e.Error = append(e.Error, err)
 				}
-				block.WriteTo(l)
 			}
 
 			cmd.Wait()
