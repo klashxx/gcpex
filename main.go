@@ -148,9 +148,14 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 			cmd = exec.Command(e.Cmd, e.Args...)
 
 			if e.Log != "" {
-				stdoutPipe, _ = cmd.StdoutPipe()
+				stdoutPipe, err = cmd.StdoutPipe()
+				if err != nil {
+					e.Error = append(e.Error, err)
+				}
 			}
+		}
 
+		if len(e.Error) == 0 {
 			err = cmd.Start()
 			if err != nil {
 				e.Error = append(e.Error, err)
@@ -165,7 +170,6 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 			log.Println("Start -> Cmd:", e.Cmd, "Args:", e.Args, "PID:", e.Pid)
 
 			if e.Log != "" {
-
 				end := make(chan error)
 				go func() {
 					var buf [1024]byte
