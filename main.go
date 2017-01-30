@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"errors"
 	"flag"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -110,6 +112,7 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 	for c := range commands {
 		var e Execution
 		var cmd *exec.Cmd
+		var output *bufio.Reader
 		var l *os.File
 
 		e.Cmd = c.Cmd
@@ -141,6 +144,11 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 		if len(e.Error) == 0 {
 			cmd = exec.Command(e.Cmd, e.Args...)
 
+			if e.Log != "" {
+				stdoutPipe, _ := cmd.StdoutPipe()
+				output = bufio.NewReader(stdoutPipe)
+			}
+
 			err = cmd.Start()
 			if err != nil {
 				e.Error = append(e.Error, err)
@@ -149,13 +157,22 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 
 		if len(e.Error) > 0 {
 			log.Println("ERROR -> Cmd:", e.Cmd, "Args:", e.Args, "Error:", e.Error)
-
 		} else {
 			start := time.Now()
 			e.Pid = cmd.Process.Pid
 			log.Println("Start -> Cmd:", e.Cmd, "Args:", e.Args, "PID:", e.Pid)
 
+			if e.Log != "" {
+				var buf = make([]byte, 2048, 2048)
+				count, err := output.Read(buf)
+				for count > 0 && err != io.EOF {
+					l.Write(buf)
+					count, err = output.Read(buf)
+				}
+			}
+
 			cmd.Wait()
+
 			e.Duration = int(time.Since(start).Seconds())
 			e.Success = cmd.ProcessState.Success()
 			log.Println("End   -> Cmd:", e.Cmd, "Args:", e.Args, "PID:", e.Pid, "Success:", e.Success)
