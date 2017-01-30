@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"flag"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -24,7 +25,7 @@ type Execution struct {
 	Success   bool
 	Pid       int
 	Duration  int
-	Error     []error
+	Errors    []error
 	Log       string
 	Overwrite bool
 }
@@ -159,13 +160,11 @@ func dispatchCommands(done <-chan struct{}, c Commands) (<-chan Command, <-chan 
 }
 
 func commandDigester(done <-chan struct{}, commands <-chan Command, executions chan<- Execution) {
-
 	for c := range commands {
 		var e Execution
 		var cmd *exec.Cmd
 		var stdoutPipe io.ReadCloser
 		var stderrPipe io.ReadCloser
-
 		var l *os.File
 		var start time.Time
 
@@ -176,48 +175,48 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 
 		path, err := exec.LookPath(c.Cmd)
 		if err != nil {
-			e.Error = append(e.Error, err)
+			e.Errors = append(e.Errors, err)
 		}
 
-		if len(e.Error) == 0 {
+		if len(e.Errors) == 0 {
 			e.Path = filepath.Clean(path)
 			if e.Log != "" {
 				err = IsUsable(e.Log, e.Overwrite)
 				if err != nil {
-					e.Error = append(e.Error, err)
+					e.Errors = append(e.Errors, err)
 				} else {
 					l, err = os.Create(e.Log)
 					if err != nil {
-						e.Error = append(e.Error, err)
+						e.Errors = append(e.Errors, err)
 					}
 					defer func(l *os.File) { l.Close() }(l)
 				}
 			}
 		}
 
-		if len(e.Error) == 0 {
+		if len(e.Errors) == 0 {
 			cmd = exec.Command(e.Cmd, e.Args...)
 
 			if e.Log != "" {
 				stdoutPipe, err = cmd.StdoutPipe()
 				if err != nil {
-					e.Error = append(e.Error, err)
+					e.Errors = append(e.Errors, err)
 				}
 				stderrPipe, err = cmd.StderrPipe()
 				if err != nil {
-					e.Error = append(e.Error, err)
+					e.Errors = append(e.Errors, err)
 				}
 			}
 		}
 
-		if len(e.Error) == 0 {
+		if len(e.Errors) == 0 {
 			err = cmd.Start()
 			if err != nil {
-				e.Error = append(e.Error, err)
+				e.Errors = append(e.Errors, err)
 			}
 		}
 
-		if len(e.Error) == 0 {
+		if len(e.Errors) == 0 {
 			start = time.Now()
 			e.Pid = cmd.Process.Pid
 			log.Println("Start -> Cmd:", e.Cmd, "Args:", e.Args, "PID:", e.Pid)
@@ -225,19 +224,19 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 			if e.Log != "" {
 				err = streamToFile(l, stdoutPipe, "STDOUT:\n=======\n\n")
 				if err != nil {
-					e.Error = append(e.Error, err)
+					e.Errors = append(e.Errors, err)
 				}
 				err = streamToFile(l, stderrPipe, "\nSTDERR:\n=======\n\n")
 				if err != nil {
-					e.Error = append(e.Error, err)
+					e.Errors = append(e.Errors, err)
 				}
 			}
 		}
 
-		if len(e.Error) == 0 {
+		if len(e.Errors) == 0 {
 			err = cmd.Wait()
 			if err != nil {
-				e.Error = append(e.Error, err)
+				e.Errors = append(e.Errors, err)
 			} else {
 				e.Duration = int(time.Since(start).Seconds())
 				e.Success = cmd.ProcessState.Success()
@@ -245,8 +244,8 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 			}
 		}
 
-		if len(e.Error) > 0 {
-			log.Println("ERROR -> Cmd:", e.Cmd, "Args:", e.Args, "Error:", e.Error)
+		if len(e.Errors) > 0 {
+			log.Println("ERROR -> Cmd:", e.Cmd, "Args:", e.Args, "Errors:", e.Errors)
 		}
 
 		select {
@@ -314,11 +313,12 @@ func main() {
 	}
 
 	resEx, err := controller(c)
-	if err != nil {
-		log.Println(err)
-	}
 
 	for _, ex := range resEx {
-		log.Println(ex)
+		fmt.Println(ex)
+	}
+
+	if err != nil {
+		log.Fatal(err)
 	}
 }
