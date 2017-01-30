@@ -15,15 +15,16 @@ import (
 )
 
 type Execution struct {
-	Cmd      string
-	Path     string
-	Env      []string
-	Args     []string
-	Success  bool
-	Pid      int
-	Duration int
-	Error    []error
-	Log      string
+	Cmd       string
+	Path      string
+	Env       []string
+	Args      []string
+	Success   bool
+	Pid       int
+	Duration  int
+	Error     []error
+	Log       string
+	Overwrite bool
 }
 
 type Executions []Execution
@@ -109,10 +110,12 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 	for c := range commands {
 		var e Execution
 		var cmd *exec.Cmd
+		var l *os.File
 
 		e.Cmd = c.Cmd
 		e.Args = c.Args
 		e.Env = c.Env
+		e.Log = c.Log
 
 		path, err := exec.LookPath(c.Cmd)
 		if err != nil {
@@ -121,6 +124,21 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 
 		if len(e.Error) == 0 {
 			e.Path = filepath.Clean(path)
+			if e.Log != "" {
+				err = IsUsable(e.Log, e.Overwrite)
+				if err != nil {
+					e.Error = append(e.Error, err)
+				} else {
+					l, err = os.Create(e.Log)
+					if err != nil {
+						e.Error = append(e.Error, err)
+					}
+					defer func(l *os.File) { l.Close() }(l)
+				}
+			}
+		}
+
+		if len(e.Error) == 0 {
 			cmd = exec.Command(e.Cmd, e.Args...)
 
 			err = cmd.Start()
