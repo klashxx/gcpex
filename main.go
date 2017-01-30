@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -21,9 +20,7 @@ type Execution struct {
 	Success  bool
 	Pid      int
 	Duration int
-	Error    string
-	Stdout   bytes.Buffer
-	Stderr   bytes.Buffer
+	Error    []error
 }
 
 type Command struct {
@@ -108,7 +105,7 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 		var e Execution
 		path, err := exec.LookPath(c.Cmd)
 		if err != nil {
-			e.Error = err.Error()
+			e.Error = append(e.Error, err)
 		} else {
 			e.Path = path
 			e.Cmd = c.Cmd
@@ -118,7 +115,7 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 
 			err = cmd.Start()
 			if err != nil {
-				e.Error = err.Error()
+				e.Error = append(e.Error, err)
 			} else {
 				start := time.Now()
 				e.Pid = cmd.Process.Pid
@@ -165,7 +162,6 @@ func controller(c Commands) bool {
 
 	for e := range executions {
 		log.Println(e)
-		log.Println(e.Stdout.String())
 		if !e.Success {
 			success = false
 		}
