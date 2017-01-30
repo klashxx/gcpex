@@ -152,6 +152,7 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 		var cmd *exec.Cmd
 		var stdoutPipe io.ReadCloser
 		var l *os.File
+		var start time.Time
 
 		e.Cmd = c.Cmd
 		e.Args = c.Args
@@ -197,10 +198,8 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 			}
 		}
 
-		if len(e.Error) > 0 {
-			log.Println("ERROR -> Cmd:", e.Cmd, "Args:", e.Args, "Error:", e.Error)
-		} else {
-			start := time.Now()
+		if len(e.Error) == 0 {
+			start = time.Now()
 			e.Pid = cmd.Process.Pid
 			log.Println("Start -> Cmd:", e.Cmd, "Args:", e.Args, "PID:", e.Pid)
 
@@ -210,12 +209,21 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 					e.Error = append(e.Error, err)
 				}
 			}
+		}
 
-			cmd.Wait()
+		if len(e.Error) == 0 {
+			err = cmd.Wait()
+			if err != nil {
+				e.Error = append(e.Error, err)
+			} else {
+				e.Duration = int(time.Since(start).Seconds())
+				e.Success = cmd.ProcessState.Success()
+				log.Println("End   -> Cmd:", e.Cmd, "Args:", e.Args, "PID:", e.Pid, "Success:", e.Success)
+			}
+		}
 
-			e.Duration = int(time.Since(start).Seconds())
-			e.Success = cmd.ProcessState.Success()
-			log.Println("End   -> Cmd:", e.Cmd, "Args:", e.Args, "PID:", e.Pid, "Success:", e.Success)
+		if len(e.Error) > 0 {
+			log.Println("ERROR -> Cmd:", e.Cmd, "Args:", e.Args, "Error:", e.Error)
 		}
 
 		select {
