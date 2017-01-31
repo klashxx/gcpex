@@ -324,6 +324,13 @@ func main() {
 		os.Exit(5)
 	}
 
+	if outJSON != "" {
+		err := isUsable(outJSON, true)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
 	c, err := deserializeJSON(inJSON)
 	if err != nil {
 		log.Fatal(err)
