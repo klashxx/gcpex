@@ -34,10 +34,11 @@ type Execution struct {
 type Executions []Execution
 
 type Command struct {
-	Cmd  string   `json:"cmd"`
-	Args []string `json:"args"`
-	Env  []string `json:"env"`
-	Log  string   `json:"log"`
+	Cmd       string   `json:"cmd"`
+	Args      []string `json:"args"`
+	Env       []string `json:"env"`
+	Log       string   `json:"log"`
+	Overwrite bool     `json:"overwrite"`
 }
 
 type Commands []Command
@@ -176,6 +177,7 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 		e.Args = c.Args
 		e.Env = c.Env
 		e.Log = c.Log
+		e.Overwrite = c.Overwrite
 
 		path, err := exec.LookPath(c.Cmd)
 		if err != nil {
