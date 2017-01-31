@@ -18,7 +18,7 @@ During my **Go** learning journey I read this [**article**](https://blog.golang.
 
 Based on that knowledge I built my own tool `gcpex`.
 
-## OK,now ... how does this thing works?
+## OK, now ... how does this thing works?
 
 The syntax is neat:
 
@@ -31,6 +31,8 @@ $ gcpex
   -routines int
     	max parallel execution routines (default 5)
  ```
+
+<hr>
 
 1. `-in`: **Mandatory requisite**, a `JSON` File to Configure our *bunch of executions*.
 
@@ -119,3 +121,208 @@ Schema definition:
 
 3. `-routines`: number of *routines* to *digester* the commands stored in our `JSON` `-in` File.
 
+## Examples
+
+Having this [`commands_01.json`](https://github.com/klashxx/gcpex/blob/master/samples/commands_01.json) file:
+
+```json
+[
+  {
+  "cmd": "echo",
+  "args": ["5"]
+ },
+ {
+  "cmd": "ls",
+  "args": ["-w"],
+  "log": "/tmp/ls.out"
+ },
+ {
+  "cmd": "sleep",
+  "args": ["5"]
+ },
+ {
+  "cmd": "sleep",
+  "args": ["5"]
+ },
+  {
+  "cmd": "dummy02",
+  "args": ["5"]
+ },
+  {
+  "cmd": "cat",
+  "args": ["commands.json"],
+  "log": "/tmp/commands.out"
+ },
+  {
+  "cmd": "cat",
+  "args": ["commands.json"],
+  "log": "/non_existent/commands.out"
+ }
+]
+```
+
+Using two routines to *digester* and storing the result in `reponse.json`:
+
+```bash
+2017/01/31 20:59:46 Start -> Cmd: echo Args: [5] PID: 54390
+2017/01/31 20:59:46 End   -> Cmd: echo Args: [5] PID: 54390 Success: true
+2017/01/31 20:59:46 Start -> Cmd: ls Args: [-j] PID: 54391
+2017/01/31 20:59:46 Start -> Cmd: sleep Args: [5] PID: 54392
+2017/01/31 20:59:46 ERROR -> Cmd: ls Args: [-j] Errors: [exit status 1]
+2017/01/31 20:59:46 Start -> Cmd: sleep Args: [5] PID: 54393
+2017/01/31 20:59:51 End   -> Cmd: sleep Args: [5] PID: 54392 Success: true
+2017/01/31 20:59:51 ERROR -> Cmd: dummy02 Args: [5] Errors: [exec: "dummy02": executable file not found in $PATH]
+2017/01/31 20:59:51 Start -> Cmd: echo Args: [Lorem ipsum dolor sit amet ,consectetur adipiscing elit,  sed do eiusmod tempor incididunt ut labore et dolore magna aliqua] PID: 54410
+2017/01/31 20:59:51 End   -> Cmd: sleep Args: [5] PID: 54393 Success: true
+2017/01/31 20:59:51 ERROR -> Cmd: cat Args: [commands.json] Errors: [/non_existent/commands.out: file base dir does not exists]
+2017/01/31 20:59:51 End   -> Cmd: echo Args: [Lorem ipsum dolor sit amet ,consectetur adipiscing elit,  sed do eiusmod tempor incididunt ut labore et dolore magna aliqua] PID: 54410 Success: true
+2017/01/31 20:59:51 Final -> Executions: 7 Success: 4 Fail: 3
+2017/01/31 20:59:51 errors in execution/s
+$ echo $?
+1
+```
+
+Log of `ls` command:
+
+```
+$ cat /tmp/ls.out
+STDOUT:
+=======
+
+<nil>
+
+STDERR:
+=======
+
+ls: illegal option -- j
+usage: ls [-ABCFGHLOPRSTUWabcdefghiklmnopqrstuwx1] [file ...]
+```
+
+Log of `echo` excution:
+
+```
+$ cat /tmp/commands.out
+STDOUT:
+=======
+
+Lorem ipsum dolor sit amet ,consectetur adipiscing elit,  sed do eiusmod tempor incididunt ut labore et dolore magna aliqua
+
+STDERR:
+=======
+
+<nil>
+```
+
+Content of the result file `respond.json`:
+
+```json
+cat response.json
+[
+{
+  "Cmd": "echo",
+  "Path": "/bin/echo",
+  "Env": null,
+  "Args": [
+    "5"
+  ],
+  "Success": true,
+  "Pid": 54390,
+  "Duration": 0,
+  "Errors": null,
+  "Log": "",
+  "Overwrite": false
+},
+{
+  "Cmd": "ls",
+  "Path": "/bin/ls",
+  "Env": null,
+  "Args": [
+    "-j"
+  ],
+  "Success": false,
+  "Pid": 54391,
+  "Duration": 0,
+  "Errors": [
+    "exit status 1"
+  ],
+  "Log": "/tmp/ls.out",
+  "Overwrite": false
+},
+{
+  "Cmd": "sleep",
+  "Path": "/bin/sleep",
+  "Env": null,
+  "Args": [
+    "5"
+  ],
+  "Success": true,
+  "Pid": 54392,
+  "Duration": 5,
+  "Errors": null,
+  "Log": "",
+  "Overwrite": false
+},
+{
+  "Cmd": "dummy02",
+  "Path": "",
+  "Env": null,
+  "Args": [
+    "5"
+  ],
+  "Success": false,
+  "Pid": 0,
+  "Duration": 0,
+  "Errors": [
+    "exec: \"dummy02\": executable file not found in $PATH"
+  ],
+  "Log": "",
+  "Overwrite": false
+},
+{
+  "Cmd": "sleep",
+  "Path": "/bin/sleep",
+  "Env": null,
+  "Args": [
+    "5"
+  ],
+  "Success": true,
+  "Pid": 54393,
+  "Duration": 5,
+  "Errors": null,
+  "Log": "",
+  "Overwrite": false
+},
+{
+  "Cmd": "cat",
+  "Path": "/bin/cat",
+  "Env": null,
+  "Args": [
+    "commands.json"
+  ],
+  "Success": false,
+  "Pid": 0,
+  "Duration": 0,
+  "Errors": [
+    "/non_existent/commands.out: file base dir does not exists"
+  ],
+  "Log": "/non_existent/commands.out",
+  "Overwrite": false
+},
+{
+  "Cmd": "echo",
+  "Path": "/bin/echo",
+  "Env": null,
+  "Args": [
+    "Lorem ipsum dolor sit amet",
+    ",consectetur adipiscing elit, ",
+    "sed do eiusmod tempor incididunt ut labore et dolore magna aliqua"
+  ],
+  "Success": true,
+  "Pid": 54410,
+  "Duration": 0,
+  "Errors": null,
+  "Log": "/tmp/commands.out",
+  "Overwrite": false
+}
+]
+```
