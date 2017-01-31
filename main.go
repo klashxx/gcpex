@@ -49,11 +49,13 @@ const (
 
 var (
 	inJSON   string
+	outJSON  string
 	routines int
 )
 
 func init() {
-	flag.StringVar(&inJSON, "in", "", "cmd JSON file repo. [mandatory]")
+	flag.StringVar(&inJSON, "in", "", "cmd JSON infile repo. [mandatory]")
+	flag.StringVar(&outJSON, "out", "", "Respond JSON outfile.")
 	flag.IntVar(&routines, "routines", 5, "max concurrent execution routines")
 }
 
