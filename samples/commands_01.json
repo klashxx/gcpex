@@ -5,7 +5,7 @@
  },
  {
   "cmd": "ls",
-  "args": ["-w"],
+  "args": ["-j"],
   "log": "/tmp/ls.out"
  },
  {
@@ -21,8 +21,11 @@
   "args": ["5"]
  },
   {
-  "cmd": "cat",
-  "args": ["commands.json"],
+  "cmd": "echo",
+  "args": ["Lorem ipsum dolor sit amet",
+           ",consectetur adipiscing elit, ",
+           "sed do eiusmod tempor incididunt ut labore et dolore magna aliqua"
+          ],
   "log": "/tmp/commands.out"
  },
   {
