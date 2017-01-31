@@ -13,7 +13,6 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 )
@@ -264,8 +263,7 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 	}
 }
 
-func controller(c Commands) (x Executions, err error) {
-	success := true
+func controller(c Commands) error {
 
 	done := make(chan struct{})
 	defer close(done)
@@ -289,23 +287,34 @@ func controller(c Commands) (x Executions, err error) {
 		close(executions)
 	}()
 
+	var err error
+	var cont int
+	var fail int
+
 	for e := range executions {
-		x = append(x, e)
+		cont++
 		if !e.Success {
-			success = false
+			fail++
 		}
+
+		_, err := json.MarshalIndent(e, "", "  ")
+		if err != nil {
+			log.Printf("Can't encode json response for PID: %d\n", e.Pid)
+			continue
+		}
+
 	}
 
-	if err := <-errc; err != nil {
+	if err = <-errc; err != nil {
 		log.Println(err)
-		success = false
 	}
 
-	if !success {
-		return x, errors.New("commands execution failed")
-	}
+	log.Printf("Final -> Executions: %d Success: %d Fail: %d\n", cont, cont-fail, fail)
 
-	return x, nil
+	if err != nil || fail > 0 {
+		return errors.New("errors in execution/s")
+	}
+	return nil
 }
 
 func main() {
@@ -320,20 +329,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	resEx, err := controller(c)
-
-	for _, ex := range resEx {
-		fmt.Println(strings.Repeat("-", 80))
-		fmt.Println("PID: ", ex.Pid)
-		fmt.Println("Success: ", ex.Success)
-		fmt.Println("Cmd: ", ex.Cmd)
-		fmt.Println("Args: ", ex.Args)
-		fmt.Println("Path: ", ex.Path)
-		fmt.Println("Duration: ", ex.Duration)
-		fmt.Println("Errors: ", ex.Errors)
-		fmt.Println("Log: ", ex.Log)
-	}
-
+	err = controller(c)
 	if err != nil {
 		log.Fatal(err)
 	}
