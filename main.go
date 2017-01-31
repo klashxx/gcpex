@@ -289,9 +289,15 @@ func controller(c Commands, outJSON string) error {
 
 	var err error
 	var fJ *os.File
+	var prep []byte
 	var cont int
 	var fail int
 
+	bString := []byte("[\n")
+	sString := []byte(",\n")
+	eString := []byte("\n]\n")
+
+	first := true
 	writeJSON := false
 
 	if outJSON != "" {
@@ -314,17 +320,32 @@ func controller(c Commands, outJSON string) error {
 			continue
 		}
 
+		if first {
+			prep = bString
+		} else {
+			prep = sString
+		}
+
+		first = false
+
 		prettyJSON, err := json.MarshalIndent(e, "", "  ")
 		if err != nil {
 			log.Printf("Can't encode json response for PID: %d\n", e.Pid)
 			continue
 		}
 
-		_, err = fJ.Write(prettyJSON)
+		_, err = fJ.Write(append(prep, prettyJSON...))
 		if err != nil {
 			log.Println("Error when writing JSON ", outJSON, ": ", err.Error())
 		} else {
 			fJ.Sync()
+		}
+	}
+
+	if !first {
+		_, err = fJ.Write(eString)
+		if err != nil {
+			log.Println("Error when writing JSON ", outJSON, ": ", err.Error())
 		}
 	}
 
