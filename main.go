@@ -42,15 +42,18 @@ type Command struct {
 
 type Commands []Command
 
+const (
+	author = "klashxx@gmail.com"
+)
+
 var (
-	author      = "klashxx@gmail.com"
-	execFile    string
-	numRoutines int
+	inJSON   string
+	routines int
 )
 
 func init() {
-	flag.StringVar(&execFile, "exec", "", "cmd JSON file. [mandatory]")
-	flag.IntVar(&numRoutines, "routines", 5, "max parallel execution routines")
+	flag.StringVar(&inJSON, "exec", "", "cmd JSON file. [mandatory]")
+	flag.IntVar(&routines, "routines", 5, "max parallel execution routines")
 }
 
 func IsUsable(pathLog string, overWrite bool) error {
@@ -124,8 +127,8 @@ func streamToFile(l *os.File, outPipe io.ReadCloser, tag string) error {
 	return err
 }
 
-func deserializeJSON(execFile string) (c Commands, err error) {
-	rawJSON, err := ioutil.ReadFile(execFile)
+func deserializeJSON(inJSON string) (c Commands, err error) {
+	rawJSON, err := ioutil.ReadFile(inJSON)
 	if err != nil {
 		return c, err
 	}
@@ -266,11 +269,11 @@ func controller(c Commands) (x Executions, err error) {
 	commands, errc := dispatchCommands(done, c)
 
 	var wg sync.WaitGroup
-	wg.Add(numRoutines)
+	wg.Add(routines)
 
 	executions := make(chan Execution)
 
-	for i := 0; i < numRoutines; i++ {
+	for i := 0; i < routines; i++ {
 		go func() {
 			commandDigester(done, commands, executions)
 			wg.Done()
@@ -303,12 +306,12 @@ func controller(c Commands) (x Executions, err error) {
 
 func main() {
 	flag.Parse()
-	if execFile == "" {
+	if inJSON == "" {
 		flag.PrintDefaults()
 		os.Exit(5)
 	}
 
-	c, err := deserializeJSON(execFile)
+	c, err := deserializeJSON(inJSON)
 	if err != nil {
 		log.Fatal(err)
 	}
