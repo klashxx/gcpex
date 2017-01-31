@@ -23,6 +23,25 @@ During my **Go** learning journey I read this [**article**](https://blog.golang.
 
 Based on that knowledge I built my own tool `gcpex`.
 
+## Tell me about the installation
+
+Obviously you need [`go`](https://golang.org/doc/install) in your machine.
+
+Then just:
+
+```bash
+$ go get -v github.com/klashxx/gcpex
+````
+
+And the executable will be compiled and placed in your `$GOPATH/bin` directory.
+
+```
+$ which gcpex
+/Users/klashxx/Documents/dev/go/bin/gcpex
+```
+
+Easy enough :sunglasses:
+
 ## OK, now ... how does this thing works?
 
 The syntax is neat:
