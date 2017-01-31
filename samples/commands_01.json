@@ -1,0 +1,33 @@
+[
+  {
+  "cmd": "echo",
+  "args": ["5"]
+ },
+ {
+  "cmd": "ls",
+  "args": ["-w"],
+  "log": "/tmp/ls.out"
+ },
+ {
+  "cmd": "sleep",
+  "args": ["5"]
+ },
+ {
+  "cmd": "sleep",
+  "args": ["5"]
+ },
+  {
+  "cmd": "dummy02",
+  "args": ["5"]
+ },
+  {
+  "cmd": "cat",
+  "args": ["commands.json"],
+  "log": "/tmp/commands.out"
+ },
+  {
+  "cmd": "cat",
+  "args": ["commands.json"],
+  "log": "/non_existent/commands.out"
+ }
+]
