@@ -263,7 +263,7 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 	}
 }
 
-func controller(c Commands) error {
+func controller(c Commands, outJSON string) error {
 
 	done := make(chan struct{})
 	defer close(done)
@@ -288,8 +288,21 @@ func controller(c Commands) error {
 	}()
 
 	var err error
+	var fJ *os.File
 	var cont int
 	var fail int
+
+	writeJSON := false
+
+	if outJSON != "" {
+		fJ, err = os.Create(outJSON)
+		if err != nil {
+			log.Println(err)
+		} else {
+			writeJSON = true
+			defer func(fJ *os.File) { fJ.Close() }(fJ)
+		}
+	}
 
 	for e := range executions {
 		cont++
@@ -297,12 +310,22 @@ func controller(c Commands) error {
 			fail++
 		}
 
-		_, err := json.MarshalIndent(e, "", "  ")
+		if !writeJSON {
+			continue
+		}
+
+		prettyJSON, err := json.MarshalIndent(e, "", "  ")
 		if err != nil {
 			log.Printf("Can't encode json response for PID: %d\n", e.Pid)
 			continue
 		}
 
+		_, err = fJ.Write(prettyJSON)
+		if err != nil {
+			log.Println("Error when writing JSON ", outJSON, ": ", err.Error())
+		} else {
+			fJ.Sync()
+		}
 	}
 
 	if err = <-errc; err != nil {
@@ -336,7 +359,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = controller(c)
+	err = controller(c, outJSON)
 	if err != nil {
 		log.Fatal(err)
 	}
