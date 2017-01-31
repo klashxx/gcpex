@@ -1,4 +1,9 @@
+Keywords: Golang, go, concurrency, JSON
+
+<img src="http://golang.org/doc/gopher/frontpage.png" alt="Golang logo" align="right"/>
+
 # {GpX} Go Concurrent Procceses Executer
+[![][license-svg]][license-url]
 
 [*Concurrency is not paralelism*](https://blog.golang.org/concurrency-is-not-parallelism)
 
@@ -427,12 +432,12 @@ As expected the total execution time is 15 seconds.
 
 :warning: **Note**: [`time`](https://linux.die.net/man/1/time) command is used to get *timing statistics*.
 
-Now ... We're gong to use the :horse_racing: *Calvary*.
+Now ... We're going to use the :horse_racing: *Calvary*.
 
 **Thirty routines** in action:
 
 ```
-$ time gcpex -in commands_02.json -routines 10
+$ time gcpex -in commands_02.json -routines 30
 2017/01/31 21:19:17 Start -> Cmd: sleep Args: [5] PID: 55798
 2017/01/31 21:19:17 Start -> Cmd: sleep Args: [5] PID: 55799
 2017/01/31 21:19:17 Start -> Cmd: sleep Args: [5] PID: 55801
@@ -500,4 +505,18 @@ user    0m0.012s
 sys     0m0.026s
 ```
 
-Again .. the result **makes sense**, the program *took five seconds* to process it all.
+Again... the result **makes sense**, the program *took five seconds* to process it all.
+
+## Licensing
+**gcpex** is licensed under the MIT License. See [LICENSE](https://github.com/klashxx/gcpex/blob/master/LICENSE) for the full license text.
+
+## Contact me
+
+You can find me out [**here**](https://klashxx.github.io/about) :godmode:
+
+<center><h6 align="center">
+<br>*Made with* :heart: *in* [*Almería*](https://www.google.com/search?q=almeria&espv=2&biw=1217&bih=585&sa=X#tbm=isch&q=almeria+movies)*, Spain.*
+</h6></center>
+
+[license-svg]: https://img.shields.io/badge/license-MIT-blue.svg
+[license-url]: https://opensource.org/licenses/MIT
