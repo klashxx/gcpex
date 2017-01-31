@@ -57,21 +57,21 @@ func init() {
 	flag.IntVar(&routines, "routines", 5, "max concurrent execution routines")
 }
 
-func IsUsable(pathLog string, overWrite bool) error {
+func isUsable(pathFile string, overWrite bool) error {
 
-	_, err := os.Stat(pathLog)
+	_, err := os.Stat(pathFile)
 	if os.IsExist(err) && !overWrite {
-		return errors.New("log file exists")
+		return fmt.Errorf("file %s exists", pathFile)
 	}
 
-	_, err = os.Stat(path.Dir(pathLog))
+	_, err = os.Stat(path.Dir(pathFile))
 
 	if os.IsNotExist(err) {
-		return errors.New("base dirlog directory does not exists")
+		return fmt.Errorf("%s: file base dir does not exists", pathFile)
 	}
 
 	if os.IsPermission(err) {
-		return errors.New("not enough permissions over base dirlog directory")
+		return fmt.Errorf("%s: not enough permissions over base file directory", pathFile)
 	}
 
 	return nil
@@ -187,7 +187,7 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 		if len(e.Errors) == 0 {
 			e.Path = filepath.Clean(path)
 			if e.Log != "" {
-				err = IsUsable(e.Log, e.Overwrite)
+				err = isUsable(e.Log, e.Overwrite)
 				if err != nil {
 					e.Errors = append(e.Errors, err.Error())
 				} else {
