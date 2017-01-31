@@ -26,7 +26,7 @@ type Execution struct {
 	Success   bool
 	Pid       int
 	Duration  int
-	Errors    []error
+	Errors    []string
 	Log       string
 	Overwrite bool
 }
@@ -52,8 +52,8 @@ var (
 )
 
 func init() {
-	flag.StringVar(&inJSON, "exec", "", "cmd JSON file. [mandatory]")
-	flag.IntVar(&routines, "routines", 5, "max parallel execution routines")
+	flag.StringVar(&inJSON, "in", "", "cmd JSON file repo. [mandatory]")
+	flag.IntVar(&routines, "routines", 5, "max concurrent execution routines")
 }
 
 func IsUsable(pathLog string, overWrite bool) error {
@@ -179,7 +179,7 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 
 		path, err := exec.LookPath(c.Cmd)
 		if err != nil {
-			e.Errors = append(e.Errors, err)
+			e.Errors = append(e.Errors, err.Error())
 		}
 
 		if len(e.Errors) == 0 {
@@ -187,11 +187,11 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 			if e.Log != "" {
 				err = IsUsable(e.Log, e.Overwrite)
 				if err != nil {
-					e.Errors = append(e.Errors, err)
+					e.Errors = append(e.Errors, err.Error())
 				} else {
 					l, err = os.Create(e.Log)
 					if err != nil {
-						e.Errors = append(e.Errors, err)
+						e.Errors = append(e.Errors, err.Error())
 					}
 					defer func(l *os.File) { l.Close() }(l)
 				}
@@ -204,11 +204,11 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 			if e.Log != "" {
 				stdoutPipe, err = cmd.StdoutPipe()
 				if err != nil {
-					e.Errors = append(e.Errors, err)
+					e.Errors = append(e.Errors, err.Error())
 				}
 				stderrPipe, err = cmd.StderrPipe()
 				if err != nil {
-					e.Errors = append(e.Errors, err)
+					e.Errors = append(e.Errors, err.Error())
 				}
 			}
 		}
@@ -216,7 +216,7 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 		if len(e.Errors) == 0 {
 			err = cmd.Start()
 			if err != nil {
-				e.Errors = append(e.Errors, err)
+				e.Errors = append(e.Errors, err.Error())
 			}
 		}
 
@@ -228,11 +228,11 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 			if e.Log != "" {
 				err = streamToFile(l, stdoutPipe, "STDOUT:\n=======\n\n")
 				if err != nil {
-					e.Errors = append(e.Errors, err)
+					e.Errors = append(e.Errors, err.Error())
 				}
 				err = streamToFile(l, stderrPipe, "\nSTDERR:\n=======\n\n")
 				if err != nil {
-					e.Errors = append(e.Errors, err)
+					e.Errors = append(e.Errors, err.Error())
 				}
 			}
 		}
@@ -240,7 +240,7 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 		if len(e.Errors) == 0 {
 			err = cmd.Wait()
 			if err != nil {
-				e.Errors = append(e.Errors, err)
+				e.Errors = append(e.Errors, err.Error())
 			} else {
 				e.Duration = int(time.Since(start).Seconds())
 				e.Success = cmd.ProcessState.Success()
