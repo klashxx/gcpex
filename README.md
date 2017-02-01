@@ -2,7 +2,7 @@ Keywords: Golang, go, concurrency, JSON
 
 <img src="http://golang.org/doc/gopher/frontpage.png" alt="Golang logo" align="right"/>
 
-# {GpX} Go Concurrent Procceses Executer
+# {GpX} Go Concurrent Processes Executer
 [![][license-svg]][license-url]
 
 [*Concurrency is not paralelism*](https://blog.golang.org/concurrency-is-not-parallelism)
@@ -355,7 +355,7 @@ cat response.json
 
 ### Nice? Let's try Another one ....
 
-Suppose a [`commands_02.json`](https://github.com/klashxx/gcpex/blob/master/samples/commands_02.json) file with **30** `sleep 5` *proccesses*:
+Suppose a [`commands_02.json`](https://github.com/klashxx/gcpex/blob/master/samples/commands_02.json) file with **30** `sleep 5` *processes*:
 
 ```json
 [
