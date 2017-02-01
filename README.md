@@ -88,8 +88,6 @@ $ gcpex
   - `env`: List of environment variables to use for launch the process, if `env` is `null` it uses the current environment
   - `overwrite`: A `bool` value, must be switched to `true` to *overwrite* a previous log File. {optional} (default = `false`)
 
-<hr>
-
 2. `-out`: an optional `JSON` file where the Response will be Written.
 
   Format:
@@ -143,9 +141,9 @@ $ gcpex
   - `Log`: File used to store `stdout` and `stderr`.
   - `Overwrite`: À `bool` flag, when `true` allowed to overwrite a previous Log file.
 
-<hr>
-
 3. `-routines`: number of *routines* to *digester* the commands stored in our `JSON` `-in` File.
+
+<hr>
 
 ## Examples
 
