@@ -23,6 +23,8 @@ During my **Go** learning journey I read this [**article**](https://blog.golang.
 
 Based on that knowledge I built my own tool `gcpex`.
 
+:point_right: **Note**: Only [`stdlib`](https://golang.org/pkg/#stdlib) packages.
+
 ## Tell me about the installation
 
 Obviously you need [`go`](https://golang.org/doc/install) in your machine.
@@ -80,11 +82,11 @@ The format is pretty self explanatory:
 
 Schema definition:
 
-- `cmd`: Executable [**mandatory**]
-- `args`: List of arguments to parse to the executable [optional]
-- `log`: Path to the log File attached to `cmd`  `stdout` and `stderr`. [optional] (missed if not specified)
+- `cmd`: Executable {**mandatory**}
+- `args`: List of arguments to parse to the executable {optional}
+- `log`: Path to the log File attached to `cmd`  `stdout` and `stderr`. {optional} (missed if not specified)
 - `env`: List of environment variables to use for launch the process, if `env` is `null` it uses the current environment
-- `overwrite`: A `bool` value, must be switched to `true` to *overwrite* a previous log File. [optional] (default = `false`)
+- `overwrite`: A `bool` value, must be switched to `true` to *overwrite* a previous log File. {optional} (default = `false`)
 
 <hr>
 
