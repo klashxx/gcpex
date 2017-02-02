@@ -189,20 +189,20 @@ Using two routines to *digester* and storing the result in `reponse.json`:
 
 ```bash
 $ gcpex -in commands_01.json -routines 2 -out response.json
-2017/01/31 20:59:46 Start -> Cmd: echo Args: [5] PID: 54390
-2017/01/31 20:59:46 End   -> Cmd: echo Args: [5] PID: 54390 Success: true
-2017/01/31 20:59:46 Start -> Cmd: ls Args: [-j] PID: 54391
-2017/01/31 20:59:46 Start -> Cmd: sleep Args: [5] PID: 54392
-2017/01/31 20:59:46 ERROR -> Cmd: ls Args: [-j] Errors: [exit status 1]
-2017/01/31 20:59:46 Start -> Cmd: sleep Args: [5] PID: 54393
-2017/01/31 20:59:51 End   -> Cmd: sleep Args: [5] PID: 54392 Success: true
-2017/01/31 20:59:51 ERROR -> Cmd: dummy02 Args: [5] Errors: [exec: "dummy02": executable file not found in $PATH]
-2017/01/31 20:59:51 Start -> Cmd: echo Args: [Lorem ipsum dolor sit amet ,consectetur adipiscing elit,  sed do eiusmod tempor incididunt ut labore et dolore magna aliqua] PID: 54410
-2017/01/31 20:59:51 End   -> Cmd: sleep Args: [5] PID: 54393 Success: true
-2017/01/31 20:59:51 ERROR -> Cmd: cat Args: [commands.json] Errors: [/non_existent/commands.out: file base dir does not exists]
-2017/01/31 20:59:51 End   -> Cmd: echo Args: [Lorem ipsum dolor sit amet ,consectetur adipiscing elit,  sed do eiusmod tempor incididunt ut labore et dolore magna aliqua] PID: 54410 Success: true
-2017/01/31 20:59:51 Final -> Executions: 7 Success: 4 Fail: 3
-2017/01/31 20:59:51 errors in execution/s
+2017/02/03 00:02:00 Start -> Cmd: echo Args: [5] PID: 7825
+2017/02/03 00:02:00 Start -> Cmd: ls Args: [-j] PID: 7826
+2017/02/03 00:02:00 End   -> Cmd: echo Args: [5] PID: 7825 Success: true
+2017/02/03 00:02:00 ERROR -> Cmd: ls Args: [-j] Errors: [exit status 1]
+2017/02/03 00:02:00 Start -> Cmd: sleep Args: [5] PID: 7827
+2017/02/03 00:02:00 Start -> Cmd: sleep Args: [5] PID: 7828
+2017/02/03 00:02:05 End   -> Cmd: sleep Args: [5] PID: 7828 Success: true
+2017/02/03 00:02:05 End   -> Cmd: sleep Args: [5] PID: 7827 Success: true
+2017/02/03 00:02:05 ERROR -> Cmd: dummy02 Args: [5] Errors: [exec: "dummy02": executable file not found in $PATH]
+2017/02/03 00:02:05 ERROR -> Cmd: cat Args: [commands.json] Errors: [/non_existent/commands.out: file base dir does not exists]
+2017/02/03 00:02:05 Start -> Cmd: echo Args: [Lorem ipsum dolor sit amet] PID: 7842
+2017/02/03 00:02:05 End   -> Cmd: echo Args: [Lorem ipsum dolor sit amet] PID: 7842 Success: true
+2017/02/03 00:02:05 Final -> Executions: 7 Success: 4 Fail: 3
+2017/02/03 00:02:05 errors in execution/s
 $ echo $?
 1
 ```
@@ -238,10 +238,9 @@ STDERR:
 <nil>
 ```
 
-Content of the result file `respond.json`:
+Content of the result file `response.json`:
 
 ```json
-cat response.json
 [
 {
   "Cmd": "echo",
@@ -251,7 +250,7 @@ cat response.json
     "5"
   ],
   "Success": true,
-  "Pid": 54390,
+  "Pid": 7825,
   "Duration": 0,
   "Errors": null,
   "Log": "",
@@ -265,7 +264,7 @@ cat response.json
     "-j"
   ],
   "Success": false,
-  "Pid": 54391,
+  "Pid": 7826,
   "Duration": 0,
   "Errors": [
     "exit status 1"
@@ -281,7 +280,21 @@ cat response.json
     "5"
   ],
   "Success": true,
-  "Pid": 54392,
+  "Pid": 7828,
+  "Duration": 5,
+  "Errors": null,
+  "Log": "",
+  "Overwrite": false
+},
+{
+  "Cmd": "sleep",
+  "Path": "/bin/sleep",
+  "Env": null,
+  "Args": [
+    "5"
+  ],
+  "Success": true,
+  "Pid": 7827,
   "Duration": 5,
   "Errors": null,
   "Log": "",
@@ -300,20 +313,6 @@ cat response.json
   "Errors": [
     "exec: \"dummy02\": executable file not found in $PATH"
   ],
-  "Log": "",
-  "Overwrite": false
-},
-{
-  "Cmd": "sleep",
-  "Path": "/bin/sleep",
-  "Env": null,
-  "Args": [
-    "5"
-  ],
-  "Success": true,
-  "Pid": 54393,
-  "Duration": 5,
-  "Errors": null,
   "Log": "",
   "Overwrite": false
 },
@@ -338,12 +337,10 @@ cat response.json
   "Path": "/bin/echo",
   "Env": null,
   "Args": [
-    "Lorem ipsum dolor sit amet",
-    ",consectetur adipiscing elit, ",
-    "sed do eiusmod tempor incididunt ut labore et dolore magna aliqua"
+    "Lorem ipsum dolor sit amet"
   ],
   "Success": true,
-  "Pid": 54410,
+  "Pid": 7842,
   "Duration": 0,
   "Errors": null,
   "Log": "/tmp/commands.out",
@@ -379,149 +376,139 @@ Add **so on** ....
 Let's to use Ten **simultaneous** routines to do our Job:
 
 ```
-$ time gcpex -in commands_02.json -routines 10
-2017/01/31 21:10:44 Start -> Cmd: sleep Args: [5] PID: 55178
-2017/01/31 21:10:44 Start -> Cmd: sleep Args: [5] PID: 55179
-2017/01/31 21:10:44 Start -> Cmd: sleep Args: [5] PID: 55180
-2017/01/31 21:10:44 Start -> Cmd: sleep Args: [5] PID: 55181
-2017/01/31 21:10:44 Start -> Cmd: sleep Args: [5] PID: 55182
-2017/01/31 21:10:44 Start -> Cmd: sleep Args: [5] PID: 55183
-2017/01/31 21:10:44 Start -> Cmd: sleep Args: [5] PID: 55184
-2017/01/31 21:10:44 Start -> Cmd: sleep Args: [5] PID: 55185
-2017/01/31 21:10:44 Start -> Cmd: sleep Args: [5] PID: 55186
-2017/01/31 21:10:44 Start -> Cmd: sleep Args: [5] PID: 55187
-2017/01/31 21:10:49 End   -> Cmd: sleep Args: [5] PID: 55179 Success: true
-2017/01/31 21:10:49 End   -> Cmd: sleep Args: [5] PID: 55180 Success: true
-2017/01/31 21:10:49 End   -> Cmd: sleep Args: [5] PID: 55178 Success: true
-2017/01/31 21:10:49 End   -> Cmd: sleep Args: [5] PID: 55181 Success: true
-2017/01/31 21:10:49 End   -> Cmd: sleep Args: [5] PID: 55182 Success: true
-2017/01/31 21:10:49 Start -> Cmd: sleep Args: [5] PID: 55191
-2017/01/31 21:10:49 Start -> Cmd: sleep Args: [5] PID: 55192
-2017/01/31 21:10:49 Start -> Cmd: sleep Args: [5] PID: 55193
-2017/01/31 21:10:49 Start -> Cmd: sleep Args: [5] PID: 55194
-2017/01/31 21:10:49 End   -> Cmd: sleep Args: [5] PID: 55184 Success: true
-2017/01/31 21:10:49 End   -> Cmd: sleep Args: [5] PID: 55183 Success: true
-2017/01/31 21:10:49 Start -> Cmd: sleep Args: [5] PID: 55195
-2017/01/31 21:10:49 Start -> Cmd: sleep Args: [5] PID: 55196
-2017/01/31 21:10:49 End   -> Cmd: sleep Args: [5] PID: 55185 Success: true
-2017/01/31 21:10:49 Start -> Cmd: sleep Args: [5] PID: 55197
-2017/01/31 21:10:49 Start -> Cmd: sleep Args: [5] PID: 55198
-2017/01/31 21:10:49 End   -> Cmd: sleep Args: [5] PID: 55186 Success: true
-2017/01/31 21:10:49 End   -> Cmd: sleep Args: [5] PID: 55187 Success: true
-2017/01/31 21:10:49 Start -> Cmd: sleep Args: [5] PID: 55199
-2017/01/31 21:10:49 Start -> Cmd: sleep Args: [5] PID: 55200
-2017/01/31 21:10:54 End   -> Cmd: sleep Args: [5] PID: 55192 Success: true
-2017/01/31 21:10:54 End   -> Cmd: sleep Args: [5] PID: 55191 Success: true
-2017/01/31 21:10:54 End   -> Cmd: sleep Args: [5] PID: 55193 Success: true
-2017/01/31 21:10:54 Start -> Cmd: sleep Args: [5] PID: 55212
-2017/01/31 21:10:54 End   -> Cmd: sleep Args: [5] PID: 55194 Success: true
-2017/01/31 21:10:54 Start -> Cmd: sleep Args: [5] PID: 55213
-2017/01/31 21:10:54 End   -> Cmd: sleep Args: [5] PID: 55195 Success: true
-2017/01/31 21:10:54 Start -> Cmd: sleep Args: [5] PID: 55214
-2017/01/31 21:10:54 Start -> Cmd: sleep Args: [5] PID: 55215
-2017/01/31 21:10:54 End   -> Cmd: sleep Args: [5] PID: 55196 Success: true
-2017/01/31 21:10:54 End   -> Cmd: sleep Args: [5] PID: 55198 Success: true
-2017/01/31 21:10:54 Start -> Cmd: sleep Args: [5] PID: 55216
-2017/01/31 21:10:54 End   -> Cmd: sleep Args: [5] PID: 55197 Success: true
-2017/01/31 21:10:54 Start -> Cmd: sleep Args: [5] PID: 55217
-2017/01/31 21:10:54 Start -> Cmd: sleep Args: [5] PID: 55218
-2017/01/31 21:10:54 End   -> Cmd: sleep Args: [5] PID: 55199 Success: true
-2017/01/31 21:10:54 Start -> Cmd: sleep Args: [5] PID: 55219
-2017/01/31 21:10:54 Start -> Cmd: sleep Args: [5] PID: 55220
-2017/01/31 21:10:54 End   -> Cmd: sleep Args: [5] PID: 55200 Success: true
-2017/01/31 21:10:54 Start -> Cmd: sleep Args: [5] PID: 55221
-2017/01/31 21:10:59 End   -> Cmd: sleep Args: [5] PID: 55213 Success: true
-2017/01/31 21:10:59 End   -> Cmd: sleep Args: [5] PID: 55212 Success: true
-2017/01/31 21:10:59 End   -> Cmd: sleep Args: [5] PID: 55214 Success: true
-2017/01/31 21:10:59 End   -> Cmd: sleep Args: [5] PID: 55215 Success: true
-2017/01/31 21:10:59 End   -> Cmd: sleep Args: [5] PID: 55216 Success: true
-2017/01/31 21:10:59 End   -> Cmd: sleep Args: [5] PID: 55217 Success: true
-2017/01/31 21:10:59 End   -> Cmd: sleep Args: [5] PID: 55218 Success: true
-2017/01/31 21:10:59 End   -> Cmd: sleep Args: [5] PID: 55219 Success: true
-2017/01/31 21:10:59 End   -> Cmd: sleep Args: [5] PID: 55220 Success: true
-2017/01/31 21:10:59 End   -> Cmd: sleep Args: [5] PID: 55221 Success: true
-2017/01/31 21:10:59 Final -> Executions: 30 Success: 30 Fail: 0
-
-real    0m15.023s
-user    0m0.008s
-sys     0m0.027s
+$ gcpex -in commands_02.json -routines 10
+2017/02/03 00:03:53 Start -> Cmd: sleep         Args: 5     Pid:  7961
+2017/02/03 00:03:53 Start -> Cmd: sleep         Args: 5     Pid:  7960
+2017/02/03 00:03:53 Start -> Cmd: sleep         Args: 5     Pid:  7962
+2017/02/03 00:03:53 Start -> Cmd: sleep         Args: 5     Pid:  7966
+2017/02/03 00:03:53 Start -> Cmd: sleep         Args: 5     Pid:  7967
+2017/02/03 00:03:53 Start -> Cmd: sleep         Args: 5     Pid:  7963
+2017/02/03 00:03:53 Start -> Cmd: sleep         Args: 5     Pid:  7968
+2017/02/03 00:03:53 Start -> Cmd: sleep         Args: 5     Pid:  7969
+2017/02/03 00:03:53 Start -> Cmd: sleep         Args: 5     Pid:  7965
+2017/02/03 00:03:53 Start -> Cmd: sleep         Args: 5     Pid:  7964
+2017/02/03 00:03:58 End   -> Cmd: sleep         Args: 5     Pid:  7960 Success: true  Elapsed: 0005
+2017/02/03 00:03:58 End   -> Cmd: sleep         Args: 5     Pid:  7961 Success: true  Elapsed: 0004
+2017/02/03 00:03:58 Start -> Cmd: sleep         Args: 5     Pid:  7970
+2017/02/03 00:03:58 Start -> Cmd: sleep         Args: 5     Pid:  7971
+2017/02/03 00:03:58 End   -> Cmd: sleep         Args: 5     Pid:  7964 Success: true  Elapsed: 0005
+2017/02/03 00:03:58 End   -> Cmd: sleep         Args: 5     Pid:  7962 Success: true  Elapsed: 0005
+2017/02/03 00:03:58 End   -> Cmd: sleep         Args: 5     Pid:  7963 Success: true  Elapsed: 0005
+2017/02/03 00:03:58 Start -> Cmd: sleep         Args: 5     Pid:  7972
+2017/02/03 00:03:58 Start -> Cmd: sleep         Args: 5     Pid:  7973
+2017/02/03 00:03:58 End   -> Cmd: sleep         Args: 5     Pid:  7965 Success: true  Elapsed: 0005
+2017/02/03 00:03:58 End   -> Cmd: sleep         Args: 5     Pid:  7966 Success: true  Elapsed: 0005
+2017/02/03 00:03:58 Start -> Cmd: sleep         Args: 5     Pid:  7974
+2017/02/03 00:03:58 End   -> Cmd: sleep         Args: 5     Pid:  7967 Success: true  Elapsed: 0005
+2017/02/03 00:03:58 Start -> Cmd: sleep         Args: 5     Pid:  7975
+2017/02/03 00:03:58 Start -> Cmd: sleep         Args: 5     Pid:  7976
+2017/02/03 00:03:58 Start -> Cmd: sleep         Args: 5     Pid:  7977
+2017/02/03 00:03:58 End   -> Cmd: sleep         Args: 5     Pid:  7968 Success: true  Elapsed: 0005
+2017/02/03 00:03:58 Start -> Cmd: sleep         Args: 5     Pid:  7978
+2017/02/03 00:03:58 End   -> Cmd: sleep         Args: 5     Pid:  7969 Success: true  Elapsed: 0005
+2017/02/03 00:03:58 Start -> Cmd: sleep         Args: 5     Pid:  7979
+2017/02/03 00:04:03 End   -> Cmd: sleep         Args: 5     Pid:  7970 Success: true  Elapsed: 0005
+2017/02/03 00:04:03 End   -> Cmd: sleep         Args: 5     Pid:  7971 Success: true  Elapsed: 0005
+2017/02/03 00:04:03 Start -> Cmd: sleep         Args: 5     Pid:  7980
+2017/02/03 00:04:03 Start -> Cmd: sleep         Args: 5     Pid:  7981
+2017/02/03 00:04:03 End   -> Cmd: sleep         Args: 5     Pid:  7972 Success: true  Elapsed: 0005
+2017/02/03 00:04:03 End   -> Cmd: sleep         Args: 5     Pid:  7973 Success: true  Elapsed: 0005
+2017/02/03 00:04:03 End   -> Cmd: sleep         Args: 5     Pid:  7974 Success: true  Elapsed: 0005
+2017/02/03 00:04:03 Start -> Cmd: sleep         Args: 5     Pid:  7982
+2017/02/03 00:04:03 Start -> Cmd: sleep         Args: 5     Pid:  7983
+2017/02/03 00:04:03 End   -> Cmd: sleep         Args: 5     Pid:  7975 Success: true  Elapsed: 0005
+2017/02/03 00:04:03 End   -> Cmd: sleep         Args: 5     Pid:  7976 Success: true  Elapsed: 0005
+2017/02/03 00:04:03 Start -> Cmd: sleep         Args: 5     Pid:  7984
+2017/02/03 00:04:03 End   -> Cmd: sleep         Args: 5     Pid:  7978 Success: true  Elapsed: 0005
+2017/02/03 00:04:03 End   -> Cmd: sleep         Args: 5     Pid:  7977 Success: true  Elapsed: 0005
+2017/02/03 00:04:03 Start -> Cmd: sleep         Args: 5     Pid:  7985
+2017/02/03 00:04:03 End   -> Cmd: sleep         Args: 5     Pid:  7979 Success: true  Elapsed: 0005
+2017/02/03 00:04:03 Start -> Cmd: sleep         Args: 5     Pid:  7986
+2017/02/03 00:04:03 Start -> Cmd: sleep         Args: 5     Pid:  7987
+2017/02/03 00:04:03 Start -> Cmd: sleep         Args: 5     Pid:  7988
+2017/02/03 00:04:03 Start -> Cmd: sleep         Args: 5     Pid:  7989
+2017/02/03 00:04:08 End   -> Cmd: sleep         Args: 5     Pid:  7980 Success: true  Elapsed: 0005
+2017/02/03 00:04:08 End   -> Cmd: sleep         Args: 5     Pid:  7981 Success: true  Elapsed: 0005
+2017/02/03 00:04:08 End   -> Cmd: sleep         Args: 5     Pid:  7982 Success: true  Elapsed: 0005
+2017/02/03 00:04:08 End   -> Cmd: sleep         Args: 5     Pid:  7983 Success: true  Elapsed: 0005
+2017/02/03 00:04:08 End   -> Cmd: sleep         Args: 5     Pid:  7986 Success: true  Elapsed: 0005
+2017/02/03 00:04:08 End   -> Cmd: sleep         Args: 5     Pid:  7985 Success: true  Elapsed: 0005
+2017/02/03 00:04:08 End   -> Cmd: sleep         Args: 5     Pid:  7984 Success: true  Elapsed: 0005
+2017/02/03 00:04:08 End   -> Cmd: sleep         Args: 5     Pid:  7987 Success: true  Elapsed: 0005
+2017/02/03 00:04:08 End   -> Cmd: sleep         Args: 5     Pid:  7988 Success: true  Elapsed: 0005
+2017/02/03 00:04:08 End   -> Cmd: sleep         Args: 5     Pid:  7989 Success: true  Elapsed: 0005
+2017/02/03 00:04:08 Final -> Elapsed (seconds): 0015        Executions (tot/ok/ko): 030 / 030 / 000
 ```
 
 As expected the total execution time is 15 seconds.
-
-:warning: **Note**: [`time`](https://linux.die.net/man/1/time) command is used to get *timing statistics*.
 
 Now ... We're going to use the :horse_racing: *Calvary*.
 
 **Thirty routines** in action:
 
 ```
-$ time gcpex -in commands_02.json -routines 30
-2017/01/31 21:19:17 Start -> Cmd: sleep Args: [5] PID: 55798
-2017/01/31 21:19:17 Start -> Cmd: sleep Args: [5] PID: 55799
-2017/01/31 21:19:17 Start -> Cmd: sleep Args: [5] PID: 55801
-2017/01/31 21:19:17 Start -> Cmd: sleep Args: [5] PID: 55797
-2017/01/31 21:19:17 Start -> Cmd: sleep Args: [5] PID: 55800
-2017/01/31 21:19:17 Start -> Cmd: sleep Args: [5] PID: 55802
-2017/01/31 21:19:17 Start -> Cmd: sleep Args: [5] PID: 55803
-2017/01/31 21:19:17 Start -> Cmd: sleep Args: [5] PID: 55804
-2017/01/31 21:19:17 Start -> Cmd: sleep Args: [5] PID: 55805
-2017/01/31 21:19:17 Start -> Cmd: sleep Args: [5] PID: 55806
-2017/01/31 21:19:17 Start -> Cmd: sleep Args: [5] PID: 55807
-2017/01/31 21:19:17 Start -> Cmd: sleep Args: [5] PID: 55808
-2017/01/31 21:19:17 Start -> Cmd: sleep Args: [5] PID: 55809
-2017/01/31 21:19:17 Start -> Cmd: sleep Args: [5] PID: 55810
-2017/01/31 21:19:18 Start -> Cmd: sleep Args: [5] PID: 55811
-2017/01/31 21:19:18 Start -> Cmd: sleep Args: [5] PID: 55812
-2017/01/31 21:19:18 Start -> Cmd: sleep Args: [5] PID: 55813
-2017/01/31 21:19:18 Start -> Cmd: sleep Args: [5] PID: 55815
-2017/01/31 21:19:18 Start -> Cmd: sleep Args: [5] PID: 55814
-2017/01/31 21:19:18 Start -> Cmd: sleep Args: [5] PID: 55816
-2017/01/31 21:19:18 Start -> Cmd: sleep Args: [5] PID: 55817
-2017/01/31 21:19:18 Start -> Cmd: sleep Args: [5] PID: 55818
-2017/01/31 21:19:18 Start -> Cmd: sleep Args: [5] PID: 55819
-2017/01/31 21:19:18 Start -> Cmd: sleep Args: [5] PID: 55820
-2017/01/31 21:19:18 Start -> Cmd: sleep Args: [5] PID: 55821
-2017/01/31 21:19:18 Start -> Cmd: sleep Args: [5] PID: 55822
-2017/01/31 21:19:18 Start -> Cmd: sleep Args: [5] PID: 55823
-2017/01/31 21:19:18 Start -> Cmd: sleep Args: [5] PID: 55824
-2017/01/31 21:19:18 Start -> Cmd: sleep Args: [5] PID: 55825
-2017/01/31 21:19:18 Start -> Cmd: sleep Args: [5] PID: 55826
-2017/01/31 21:19:22 End   -> Cmd: sleep Args: [5] PID: 55797 Success: true
-2017/01/31 21:19:22 End   -> Cmd: sleep Args: [5] PID: 55799 Success: true
-2017/01/31 21:19:22 End   -> Cmd: sleep Args: [5] PID: 55798 Success: true
-2017/01/31 21:19:22 End   -> Cmd: sleep Args: [5] PID: 55801 Success: true
-2017/01/31 21:19:22 End   -> Cmd: sleep Args: [5] PID: 55800 Success: true
-2017/01/31 21:19:22 End   -> Cmd: sleep Args: [5] PID: 55802 Success: true
-2017/01/31 21:19:22 End   -> Cmd: sleep Args: [5] PID: 55803 Success: true
-2017/01/31 21:19:22 End   -> Cmd: sleep Args: [5] PID: 55804 Success: true
-2017/01/31 21:19:22 End   -> Cmd: sleep Args: [5] PID: 55805 Success: true
-2017/01/31 21:19:22 End   -> Cmd: sleep Args: [5] PID: 55806 Success: true
-2017/01/31 21:19:22 End   -> Cmd: sleep Args: [5] PID: 55807 Success: true
-2017/01/31 21:19:22 End   -> Cmd: sleep Args: [5] PID: 55808 Success: true
-2017/01/31 21:19:22 End   -> Cmd: sleep Args: [5] PID: 55809 Success: true
-2017/01/31 21:19:23 End   -> Cmd: sleep Args: [5] PID: 55810 Success: true
-2017/01/31 21:19:23 End   -> Cmd: sleep Args: [5] PID: 55811 Success: true
-2017/01/31 21:19:23 End   -> Cmd: sleep Args: [5] PID: 55812 Success: true
-2017/01/31 21:19:23 End   -> Cmd: sleep Args: [5] PID: 55813 Success: true
-2017/01/31 21:19:23 End   -> Cmd: sleep Args: [5] PID: 55814 Success: true
-2017/01/31 21:19:23 End   -> Cmd: sleep Args: [5] PID: 55815 Success: true
-2017/01/31 21:19:23 End   -> Cmd: sleep Args: [5] PID: 55816 Success: true
-2017/01/31 21:19:23 End   -> Cmd: sleep Args: [5] PID: 55817 Success: true
-2017/01/31 21:19:23 End   -> Cmd: sleep Args: [5] PID: 55818 Success: true
-2017/01/31 21:19:23 End   -> Cmd: sleep Args: [5] PID: 55819 Success: true
-2017/01/31 21:19:23 End   -> Cmd: sleep Args: [5] PID: 55820 Success: true
-2017/01/31 21:19:23 End   -> Cmd: sleep Args: [5] PID: 55821 Success: true
-2017/01/31 21:19:23 End   -> Cmd: sleep Args: [5] PID: 55822 Success: true
-2017/01/31 21:19:23 End   -> Cmd: sleep Args: [5] PID: 55823 Success: true
-2017/01/31 21:19:23 End   -> Cmd: sleep Args: [5] PID: 55824 Success: true
-2017/01/31 21:19:23 End   -> Cmd: sleep Args: [5] PID: 55825 Success: true
-2017/01/31 21:19:23 End   -> Cmd: sleep Args: [5] PID: 55826 Success: true
-2017/01/31 21:19:23 Final -> Executions: 30 Success: 30 Fail: 0
-
-real    0m5.030s
-user    0m0.012s
-sys     0m0.026s
+$ gcpex -in commands_02.json -routines 30
+2017/02/03 00:05:39 Start -> Cmd: sleep         Args: 5     Pid:  8102
+2017/02/03 00:05:39 Start -> Cmd: sleep         Args: 5     Pid:  8104
+2017/02/03 00:05:39 Start -> Cmd: sleep         Args: 5     Pid:  8105
+2017/02/03 00:05:39 Start -> Cmd: sleep         Args: 5     Pid:  8106
+2017/02/03 00:05:39 Start -> Cmd: sleep         Args: 5     Pid:  8103
+2017/02/03 00:05:39 Start -> Cmd: sleep         Args: 5     Pid:  8109
+2017/02/03 00:05:39 Start -> Cmd: sleep         Args: 5     Pid:  8110
+2017/02/03 00:05:39 Start -> Cmd: sleep         Args: 5     Pid:  8111
+2017/02/03 00:05:39 Start -> Cmd: sleep         Args: 5     Pid:  8107
+2017/02/03 00:05:39 Start -> Cmd: sleep         Args: 5     Pid:  8108
+2017/02/03 00:05:39 Start -> Cmd: sleep         Args: 5     Pid:  8112
+2017/02/03 00:05:39 Start -> Cmd: sleep         Args: 5     Pid:  8113
+2017/02/03 00:05:40 Start -> Cmd: sleep         Args: 5     Pid:  8114
+2017/02/03 00:05:40 Start -> Cmd: sleep         Args: 5     Pid:  8115
+2017/02/03 00:05:40 Start -> Cmd: sleep         Args: 5     Pid:  8116
+2017/02/03 00:05:40 Start -> Cmd: sleep         Args: 5     Pid:  8117
+2017/02/03 00:05:40 Start -> Cmd: sleep         Args: 5     Pid:  8118
+2017/02/03 00:05:40 Start -> Cmd: sleep         Args: 5     Pid:  8119
+2017/02/03 00:05:40 Start -> Cmd: sleep         Args: 5     Pid:  8120
+2017/02/03 00:05:40 Start -> Cmd: sleep         Args: 5     Pid:  8121
+2017/02/03 00:05:40 Start -> Cmd: sleep         Args: 5     Pid:  8122
+2017/02/03 00:05:40 Start -> Cmd: sleep         Args: 5     Pid:  8123
+2017/02/03 00:05:40 Start -> Cmd: sleep         Args: 5     Pid:  8124
+2017/02/03 00:05:40 Start -> Cmd: sleep         Args: 5     Pid:  8125
+2017/02/03 00:05:40 Start -> Cmd: sleep         Args: 5     Pid:  8126
+2017/02/03 00:05:40 Start -> Cmd: sleep         Args: 5     Pid:  8127
+2017/02/03 00:05:40 Start -> Cmd: sleep         Args: 5     Pid:  8128
+2017/02/03 00:05:40 Start -> Cmd: sleep         Args: 5     Pid:  8129
+2017/02/03 00:05:40 Start -> Cmd: sleep         Args: 5     Pid:  8130
+2017/02/03 00:05:40 Start -> Cmd: sleep         Args: 5     Pid:  8131
+2017/02/03 00:05:44 End   -> Cmd: sleep         Args: 5     Pid:  8102 Success: true  Elapsed: 0005
+2017/02/03 00:05:44 End   -> Cmd: sleep         Args: 5     Pid:  8105 Success: true  Elapsed: 0004
+2017/02/03 00:05:44 End   -> Cmd: sleep         Args: 5     Pid:  8103 Success: true  Elapsed: 0005
+2017/02/03 00:05:44 End   -> Cmd: sleep         Args: 5     Pid:  8104 Success: true  Elapsed: 0005
+2017/02/03 00:05:44 End   -> Cmd: sleep         Args: 5     Pid:  8106 Success: true  Elapsed: 0004
+2017/02/03 00:05:44 End   -> Cmd: sleep         Args: 5     Pid:  8109 Success: true  Elapsed: 0004
+2017/02/03 00:05:44 End   -> Cmd: sleep         Args: 5     Pid:  8107 Success: true  Elapsed: 0005
+2017/02/03 00:05:44 End   -> Cmd: sleep         Args: 5     Pid:  8108 Success: true  Elapsed: 0004
+2017/02/03 00:05:44 End   -> Cmd: sleep         Args: 5     Pid:  8110 Success: true  Elapsed: 0005
+2017/02/03 00:05:44 End   -> Cmd: sleep         Args: 5     Pid:  8112 Success: true  Elapsed: 0005
+2017/02/03 00:05:44 End   -> Cmd: sleep         Args: 5     Pid:  8111 Success: true  Elapsed: 0005
+2017/02/03 00:05:45 End   -> Cmd: sleep         Args: 5     Pid:  8113 Success: true  Elapsed: 0005
+2017/02/03 00:05:45 End   -> Cmd: sleep         Args: 5     Pid:  8114 Success: true  Elapsed: 0005
+2017/02/03 00:05:45 End   -> Cmd: sleep         Args: 5     Pid:  8115 Success: true  Elapsed: 0005
+2017/02/03 00:05:45 End   -> Cmd: sleep         Args: 5     Pid:  8116 Success: true  Elapsed: 0005
+2017/02/03 00:05:45 End   -> Cmd: sleep         Args: 5     Pid:  8117 Success: true  Elapsed: 0005
+2017/02/03 00:05:45 End   -> Cmd: sleep         Args: 5     Pid:  8118 Success: true  Elapsed: 0005
+2017/02/03 00:05:45 End   -> Cmd: sleep         Args: 5     Pid:  8119 Success: true  Elapsed: 0005
+2017/02/03 00:05:45 End   -> Cmd: sleep         Args: 5     Pid:  8120 Success: true  Elapsed: 0005
+2017/02/03 00:05:45 End   -> Cmd: sleep         Args: 5     Pid:  8121 Success: true  Elapsed: 0005
+2017/02/03 00:05:45 End   -> Cmd: sleep         Args: 5     Pid:  8122 Success: true  Elapsed: 0005
+2017/02/03 00:05:45 End   -> Cmd: sleep         Args: 5     Pid:  8123 Success: true  Elapsed: 0005
+2017/02/03 00:05:45 End   -> Cmd: sleep         Args: 5     Pid:  8124 Success: true  Elapsed: 0005
+2017/02/03 00:05:45 End   -> Cmd: sleep         Args: 5     Pid:  8125 Success: true  Elapsed: 0005
+2017/02/03 00:05:45 End   -> Cmd: sleep         Args: 5     Pid:  8126 Success: true  Elapsed: 0005
+2017/02/03 00:05:45 End   -> Cmd: sleep         Args: 5     Pid:  8128 Success: true  Elapsed: 0005
+2017/02/03 00:05:45 End   -> Cmd: sleep         Args: 5     Pid:  8127 Success: true  Elapsed: 0005
+2017/02/03 00:05:45 End   -> Cmd: sleep         Args: 5     Pid:  8129 Success: true  Elapsed: 0005
+2017/02/03 00:05:45 End   -> Cmd: sleep         Args: 5     Pid:  8130 Success: true  Elapsed: 0005
+2017/02/03 00:05:45 End   -> Cmd: sleep         Args: 5     Pid:  8131 Success: true  Elapsed: 0005
+2017/02/03 00:05:45 Final -> Elapsed (seconds): 0005        Executions (tot/ok/ko): 030 / 030 / 000
 ```
 
 Again... the result **makes sense**, the program *took five seconds* to process it all.
