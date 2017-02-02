@@ -22,10 +22,7 @@
  },
   {
   "cmd": "echo",
-  "args": ["Lorem ipsum dolor sit amet",
-           ",consectetur adipiscing elit, ",
-           "sed do eiusmod tempor incididunt ut labore et dolore magna aliqua"
-          ],
+  "args": ["Lorem ipsum dolor sit amet"],
   "log": "/tmp/commands.out"
  },
   {
