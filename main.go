@@ -13,6 +13,8 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -180,6 +182,8 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 		e.Log = c.Log
 		e.Overwrite = c.Overwrite
 
+		strArgs := strings.Join(e.Args, " ")
+
 		path, err := exec.LookPath(c.Cmd)
 		if err != nil {
 			e.Errors = append(e.Errors, err.Error())
@@ -226,7 +230,7 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 		if len(e.Errors) == 0 {
 			start = time.Now()
 			e.Pid = cmd.Process.Pid
-			log.Println("Start -> Cmd:", e.Cmd, "Args:", e.Args, "PID:", e.Pid)
+			log.Printf("Start -> Cmd: %-13s Args: %-15s Pid: %5d\n", e.Cmd, strArgs, e.Pid)
 
 			if e.Log != "" {
 				err = streamToFile(l, stdoutPipe, "STDOUT:\n=======\n\n")
@@ -247,12 +251,12 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 			} else {
 				e.Duration = int(time.Since(start).Seconds())
 				e.Success = cmd.ProcessState.Success()
-				log.Println("End   -> Cmd:", e.Cmd, "Args:", e.Args, "PID:", e.Pid, "Success:", e.Success)
+				log.Printf("End   -> Cmd: %-13s Args: %-15s Pid: %5d Success: %-5s Elapsed: %04d\n", e.Cmd, strArgs, e.Pid, strconv.FormatBool(e.Success), e.Duration)
 			}
 		}
 
 		if len(e.Errors) > 0 {
-			log.Println("ERROR -> Cmd:", e.Cmd, "Args:", e.Args, "Errors:", e.Errors)
+			log.Printf("ERROR -> Cmd: %-13s Args: %-15s Err: %s\n", e.Cmd, strArgs, strings.Join(e.Errors, ", "))
 		}
 
 		select {
@@ -357,7 +361,7 @@ func controller(c Commands, outJSON string) error {
 
 	totalSeconds := int(time.Since(start).Seconds())
 
-	log.Printf("Final -> Executions: %d Success: %d Fail: %d Elapsed: %d\n", cont, cont-fail, fail, totalSeconds)
+	log.Printf("Final -> Elapsed (seconds): %04d %16s Executions (tot/ok/ko): %03d / %03d / %03d\n", totalSeconds, "", cont, cont-fail, fail)
 
 	if err != nil || fail > 0 {
 		return errors.New("errors in execution/s")
