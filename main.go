@@ -270,6 +270,8 @@ func controller(c Commands, outJSON string) error {
 
 	commands, errc := dispatchCommands(done, c)
 
+	start := time.Now()
+
 	var wg sync.WaitGroup
 	wg.Add(routines)
 
@@ -353,7 +355,9 @@ func controller(c Commands, outJSON string) error {
 		log.Println(err)
 	}
 
-	log.Printf("Final -> Executions: %d Success: %d Fail: %d\n", cont, cont-fail, fail)
+	totalSeconds := int(time.Since(start).Seconds())
+
+	log.Printf("Final -> Executions: %d Success: %d Fail: %d Elapsed: %d\n", cont, cont-fail, fail, totalSeconds)
 
 	if err != nil || fail > 0 {
 		return errors.New("errors in execution/s")
