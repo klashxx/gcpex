@@ -189,20 +189,19 @@ Using two routines to *digester* and storing the result in `reponse.json`:
 
 ```bash
 $ gcpex -in commands_01.json -routines 2 -out response.json
-2017/02/03 00:02:00 Start -> Cmd: echo Args: [5] PID: 7825
-2017/02/03 00:02:00 Start -> Cmd: ls Args: [-j] PID: 7826
-2017/02/03 00:02:00 End   -> Cmd: echo Args: [5] PID: 7825 Success: true
-2017/02/03 00:02:00 ERROR -> Cmd: ls Args: [-j] Errors: [exit status 1]
-2017/02/03 00:02:00 Start -> Cmd: sleep Args: [5] PID: 7827
-2017/02/03 00:02:00 Start -> Cmd: sleep Args: [5] PID: 7828
-2017/02/03 00:02:05 End   -> Cmd: sleep Args: [5] PID: 7828 Success: true
-2017/02/03 00:02:05 End   -> Cmd: sleep Args: [5] PID: 7827 Success: true
-2017/02/03 00:02:05 ERROR -> Cmd: dummy02 Args: [5] Errors: [exec: "dummy02": executable file not found in $PATH]
-2017/02/03 00:02:05 ERROR -> Cmd: cat Args: [commands.json] Errors: [/non_existent/commands.out: file base dir does not exists]
-2017/02/03 00:02:05 Start -> Cmd: echo Args: [Lorem ipsum dolor sit amet] PID: 7842
-2017/02/03 00:02:05 End   -> Cmd: echo Args: [Lorem ipsum dolor sit amet] PID: 7842 Success: true
-2017/02/03 00:02:05 Final -> Executions: 7 Success: 4 Fail: 3
-2017/02/03 00:02:05 errors in execution/s
+2017/02/03 00:12:46 Start -> Cmd: echo          Args: 5               Pid:  8845
+2017/02/03 00:12:46 Start -> Cmd: ls            Args: -j              Pid:  8846
+2017/02/03 00:12:46 End   -> Cmd: echo          Args: 5               Pid:  8845 Success: true  Elapsed: 0000
+2017/02/03 00:12:46 ERROR -> Cmd: ls            Args: -j              Err: exit status 1
+2017/02/03 00:12:46 Start -> Cmd: sleep         Args: 5               Pid:  8847
+2017/02/03 00:12:46 Start -> Cmd: sleep         Args: 5               Pid:  8848
+2017/02/03 00:12:51 End   -> Cmd: sleep         Args: 5               Pid:  8848 Success: true  Elapsed: 0005
+2017/02/03 00:12:51 End   -> Cmd: sleep         Args: 5               Pid:  8847 Success: true  Elapsed: 0005
+2017/02/03 00:12:51 ERROR -> Cmd: dummy02       Args: 5               Err: exec: "dummy02": executable file not found in $PATH
+2017/02/03 00:12:51 ERROR -> Cmd: cat           Args: commands.json   Err: /non_existent/commands.out: file base dir does not exists
+2017/02/03 00:12:51 Start -> Cmd: echo          Args: Lorem ipsum dolor sit amet Pid:  8849
+2017/02/03 00:12:51 End   -> Cmd: echo          Args: Lorem ipsum dolor sit amet Pid:  8849 Success: true  Elapsed: 0000
+2017/02/03 00:12:51 Final -> Elapsed (seconds): 0005                  Executions (tot/ok/ko): 007 / 004 / 003
 $ echo $?
 1
 ```
@@ -250,7 +249,7 @@ Content of the result file `response.json`:
     "5"
   ],
   "Success": true,
-  "Pid": 7825,
+  "Pid": 8845,
   "Duration": 0,
   "Errors": null,
   "Log": "",
@@ -264,7 +263,7 @@ Content of the result file `response.json`:
     "-j"
   ],
   "Success": false,
-  "Pid": 7826,
+  "Pid": 8846,
   "Duration": 0,
   "Errors": [
     "exit status 1"
@@ -280,7 +279,7 @@ Content of the result file `response.json`:
     "5"
   ],
   "Success": true,
-  "Pid": 7828,
+  "Pid": 8848,
   "Duration": 5,
   "Errors": null,
   "Log": "",
@@ -294,7 +293,7 @@ Content of the result file `response.json`:
     "5"
   ],
   "Success": true,
-  "Pid": 7827,
+  "Pid": 8847,
   "Duration": 5,
   "Errors": null,
   "Log": "",
@@ -340,7 +339,7 @@ Content of the result file `response.json`:
     "Lorem ipsum dolor sit amet"
   ],
   "Success": true,
-  "Pid": 7842,
+  "Pid": 8849,
   "Duration": 0,
   "Errors": null,
   "Log": "/tmp/commands.out",
