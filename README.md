@@ -520,7 +520,7 @@ Again... the result **makes sense**, the program *took five seconds* to process 
 You can find me out [**here**](https://klashxx.github.io/about) :godmode:
 
 <center><h6 align="center">
-<br>*Made with* :heart: *in* [*Almería*](https://www.google.com/search?q=almeria&espv=2&biw=1217&bih=585&sa=X#tbm=isch&q=almeria+movies)*, Spain.*
+<br>Made with :heart: in <a href="https://www.w3schools.com/html/">Almería</a>, Spain.
 </h6></center>
 
 [license-svg]: https://img.shields.io/badge/license-MIT-blue.svg
