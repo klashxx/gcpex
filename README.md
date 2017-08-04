@@ -529,5 +529,5 @@ You can find me out [**here**](https://klashxx.github.io/about) :godmode:
 [license-svg]: https://img.shields.io/badge/license-MIT-blue.svg
 [license-url]: https://opensource.org/licenses/MIT
 
-[asciicast-png]: https://asciinema.org/a/132234.png
-[asciicast-url]: https://asciinema.org/a/132234
+[asciicast-png]: https://asciinema.org/a/132235.png
+[asciicast-url]: https://asciinema.org/a/132235
