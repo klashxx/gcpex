@@ -25,6 +25,9 @@ Based on that knowledge I built my own tool `gcpex`.
 
 :point_right: **Note**: Only [`stdlib`](https://golang.org/pkg/#stdlib) packages.
 
+## Demo
+[![demo][asciicast-png]][asciicast-url]
+
 ## Tell me about the installation
 
 Obviously you need [`go`](https://golang.org/doc/install) in your machine.
@@ -511,9 +514,6 @@ $ gcpex -in commands_02.json -routines 30
 ```
 
 Again... the result **makes sense**, the program *took five seconds* to process it all.
-
-## Demo
-[![demo][asciicast-png]][asciicast-url]
 
 ## Licensing
 **gcpex** is licensed under the MIT License. See [LICENSE](https://github.com/klashxx/gcpex/blob/master/LICENSE) for the full license text.
