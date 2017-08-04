@@ -512,6 +512,9 @@ $ gcpex -in commands_02.json -routines 30
 
 Again... the result **makes sense**, the program *took five seconds* to process it all.
 
+## Demo
+[![demo][asciicast-png]][asciicast-url]
+
 ## Licensing
 **gcpex** is licensed under the MIT License. See [LICENSE](https://github.com/klashxx/gcpex/blob/master/LICENSE) for the full license text.
 
@@ -525,3 +528,6 @@ You can find me out [**here**](https://klashxx.github.io/about) :godmode:
 
 [license-svg]: https://img.shields.io/badge/license-MIT-blue.svg
 [license-url]: https://opensource.org/licenses/MIT
+
+[asciicast-png]: https://asciinema.org/a/132234.png
+[asciicast-url]: https://asciinema.org/a/132234
