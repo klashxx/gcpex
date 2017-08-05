@@ -23,7 +23,7 @@ During my **Go** learning journey I read this [**article**](https://blog.golang.
 
 Based on that knowledge I built my own tool `gcpex`.
 
-:point_right: **Note**: Only [`stdlib`](https://golang.org/pkg/#stdlib) packages.
+:point_right: **Note**: Only [`stdlib`](https://golang.org/pkg/#stdlib) packages and **just** one [`source`](https://github.com/klashxx/gcpex/blob/master/main.go) file used.
 
 ## Demo
 [![demo][asciicast-png]][asciicast-url]
