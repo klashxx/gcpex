@@ -1,6 +1,6 @@
 Keywords: Golang, go, concurrency, JSON
 
-<img src="http://golang.org/doc/gopher/frontpage.png" alt="Golang logo" align="right"/>
+<img src="gopher.png" alt="Golang logo" align="right"/>
 
 # {GpX} Go Concurrent Processes Executer
 [![][license-svg]][license-url]
