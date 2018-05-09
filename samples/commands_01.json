@@ -6,7 +6,8 @@
  {
   "cmd": "ls",
   "args": ["-j"],
-  "log": "/tmp/ls.out"
+  "log": "/tmp/ls.out",
+  "err": "/tmp/ls.err"
  },
  {
   "cmd": "sleep",
@@ -23,7 +24,8 @@
   {
   "cmd": "echo",
   "args": ["Lorem ipsum dolor sit amet"],
-  "log": "/tmp/commands.out"
+  "log": "/tmp/commands.out",
+  "err": "/tmp/commands.err"
  },
   {
   "cmd": "cat",

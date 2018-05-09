@@ -29,6 +29,7 @@ type Execution struct {
 	Duration  int
 	Errors    []string
 	Log       string
+	Err       string
 	Overwrite bool
 }
 
@@ -39,6 +40,7 @@ type Command struct {
 	Args      []string `json:"args"`
 	Env       []string `json:"env"`
 	Log       string   `json:"log"`
+	Err       string   `json:"err"`
 	Overwrite bool     `json:"overwrite"`
 }
 
@@ -61,7 +63,6 @@ func init() {
 }
 
 func isUsable(pathFile string, overWrite bool) error {
-
 	_, err := os.Stat(pathFile)
 	if os.IsExist(err) && !overWrite {
 		return fmt.Errorf("file %s exists", pathFile)
@@ -76,20 +77,41 @@ func isUsable(pathFile string, overWrite bool) error {
 	if os.IsPermission(err) {
 		return fmt.Errorf("%s: not enough permissions over base file directory", pathFile)
 	}
-
 	return nil
 }
 
-func streamToFile(l *os.File, outPipe io.ReadCloser, tag string) error {
+func getLogHandler(log string, ow bool) (handler *os.File, err error) {
+	err = isUsable(log, ow)
+	if err != nil {
+		return handler, err
+	}
+
+	handler, err = os.Create(log)
+	if err != nil {
+		return handler, err
+	}
+	defer func(handler *os.File) { handler.Close() }(handler)
+
+	return handler, nil
+}
+
+func deserializeJSON(inJSON string) (c Commands, err error) {
+	rawJSON, err := ioutil.ReadFile(inJSON)
+	if err != nil {
+		return c, err
+	}
+
+	err = json.Unmarshal(rawJSON, &c)
+	if err != nil {
+		return c, err
+	}
+	return c, nil
+}
+
+func streamToFile(l *os.File, outPipe io.ReadCloser) error {
 	var err error
-	var buf *bytes.Buffer
 	var lock sync.Mutex
 	block := bytes.Buffer{}
-
-	if tag != "" {
-		buf = bytes.NewBufferString(tag)
-		buf.WriteTo(l)
-	}
 
 	bufC := 0
 	end := make(chan error)
@@ -120,29 +142,10 @@ func streamToFile(l *os.File, outPipe io.ReadCloser, tag string) error {
 	}
 	block.WriteTo(l)
 
-	if tag != "" && bufC == 0 {
-		buf = bytes.NewBufferString("<nil>\n")
-		buf.WriteTo(l)
-	}
-
 	if err == io.EOF {
 		return nil
 	}
 	return err
-}
-
-func deserializeJSON(inJSON string) (c Commands, err error) {
-	rawJSON, err := ioutil.ReadFile(inJSON)
-	if err != nil {
-		return c, err
-	}
-
-	err = json.Unmarshal(rawJSON, &c)
-	if err != nil {
-		return c, err
-	}
-
-	return c, nil
 }
 
 func dispatchCommands(done <-chan struct{}, c Commands) (<-chan Command, <-chan error) {
@@ -173,13 +176,15 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 		var cmd *exec.Cmd
 		var stdoutPipe io.ReadCloser
 		var stderrPipe io.ReadCloser
-		var l *os.File
+		var stdoutLog *os.File
+		var stderrLog *os.File
 		var start time.Time
 
 		e.Cmd = c.Cmd
 		e.Args = c.Args
 		e.Env = c.Env
 		e.Log = c.Log
+		e.Err = c.Err
 		e.Overwrite = c.Overwrite
 
 		strArgs := strings.Join(e.Args, " ")
@@ -190,22 +195,22 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 		}
 
 		if len(e.Errors) == 0 {
-			e.Path = filepath.Clean(path)
 			if e.Log != "" {
-				err = isUsable(e.Log, e.Overwrite)
+				stdoutLog, err = getLogHandler(e.Log, e.Overwrite)
 				if err != nil {
 					e.Errors = append(e.Errors, err.Error())
-				} else {
-					l, err = os.Create(e.Log)
-					if err != nil {
-						e.Errors = append(e.Errors, err.Error())
-					}
-					defer func(l *os.File) { l.Close() }(l)
+				}
+			}
+			if e.Err != "" {
+				stderrLog, err = getLogHandler(e.Err, e.Overwrite)
+				if err != nil {
+					e.Errors = append(e.Errors, err.Error())
 				}
 			}
 		}
 
 		if len(e.Errors) == 0 {
+			e.Path = filepath.Clean(path)
 			cmd = exec.Command(e.Cmd, e.Args...)
 
 			if e.Log != "" {
@@ -213,6 +218,9 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 				if err != nil {
 					e.Errors = append(e.Errors, err.Error())
 				}
+			}
+
+			if e.Err != "" {
 				stderrPipe, err = cmd.StderrPipe()
 				if err != nil {
 					e.Errors = append(e.Errors, err.Error())
@@ -233,30 +241,34 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 			log.Printf("Start -> Cmd: %-13s Args: %-15s Pid: %5d\n", e.Cmd, strArgs, e.Pid)
 
 			if e.Log != "" {
-				err = streamToFile(l, stdoutPipe, "STDOUT:\n=======\n\n")
-				if err != nil {
-					e.Errors = append(e.Errors, err.Error())
-				}
-				err = streamToFile(l, stderrPipe, "\nSTDERR:\n=======\n\n")
+				err = streamToFile(stdoutLog, stdoutPipe)
 				if err != nil {
 					e.Errors = append(e.Errors, err.Error())
 				}
 			}
+
+			if e.Err != "" {
+				err = streamToFile(stderrLog, stderrPipe)
+				if err != nil {
+					e.Errors = append(e.Errors, err.Error())
+				}
+			}
+
 		}
 
 		if len(e.Errors) == 0 {
 			err = cmd.Wait()
 			if err != nil {
 				e.Errors = append(e.Errors, err.Error())
-			} else {
-				e.Duration = int(time.Since(start).Seconds())
-				e.Success = cmd.ProcessState.Success()
-				log.Printf("End   -> Cmd: %-13s Args: %-15s Pid: %5d Success: %-5s Elapsed: %04d\n", e.Cmd, strArgs, e.Pid, strconv.FormatBool(e.Success), e.Duration)
 			}
 		}
 
 		if len(e.Errors) > 0 {
 			log.Printf("ERROR -> Cmd: %-13s Args: %-15s Err: %s\n", e.Cmd, strArgs, strings.Join(e.Errors, ", "))
+		} else {
+			e.Duration = int(time.Since(start).Seconds())
+			e.Success = cmd.ProcessState.Success()
+			log.Printf("End   -> Cmd: %-13s Args: %-15s Pid: %5d Success: %-5s Elapsed: %04d\n", e.Cmd, strArgs, e.Pid, strconv.FormatBool(e.Success), e.Duration)
 		}
 
 		select {
@@ -267,37 +279,10 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 	}
 }
 
-func controller(c Commands, outJSON string) error {
-
-	done := make(chan struct{})
-	defer close(done)
-
-	commands, errc := dispatchCommands(done, c)
-
-	start := time.Now()
-
-	var wg sync.WaitGroup
-	wg.Add(routines)
-
-	executions := make(chan Execution)
-
-	for i := 0; i < routines; i++ {
-		go func() {
-			commandDigester(done, commands, executions)
-			wg.Done()
-		}()
-	}
-
-	go func() {
-		wg.Wait()
-		close(executions)
-	}()
-
+func responseProcessor(outJSON string, executions <-chan Execution) (cont int, fail int) {
 	var err error
 	var fJ *os.File
 	var prep []byte
-	var cont int
-	var fail int
 
 	bString := []byte("[\n")
 	sString := []byte(",\n")
@@ -354,6 +339,37 @@ func controller(c Commands, outJSON string) error {
 			log.Println("Error when writing JSON ", outJSON, ": ", err.Error())
 		}
 	}
+
+	return cont, fail
+}
+
+func controller(c Commands, outJSON string) error {
+	done := make(chan struct{})
+	defer close(done)
+
+	commands, errc := dispatchCommands(done, c)
+
+	start := time.Now()
+	var err error
+
+	var wg sync.WaitGroup
+	wg.Add(routines)
+
+	executions := make(chan Execution)
+
+	for i := 0; i < routines; i++ {
+		go func() {
+			commandDigester(done, commands, executions)
+			wg.Done()
+		}()
+	}
+
+	go func() {
+		wg.Wait()
+		close(executions)
+	}()
+
+	cont, fail := responseProcessor(outJSON, executions)
 
 	if err = <-errc; err != nil {
 		log.Println(err)

@@ -3,6 +3,7 @@ Keywords: Golang, go, concurrency, JSON
 <img src="gopher.png" alt="Golang logo" align="right"/>
 
 # {GpX} Go Concurrent Processes Executer
+
 [![][license-svg]][license-url]
 
 [*Concurrency is not paralelism*](https://blog.golang.org/concurrency-is-not-parallelism)
@@ -11,38 +12,43 @@ Keywords: Golang, go, concurrency, JSON
 
 ## What is *gcpex* ?
 
-Messing around `*nix` , a need arises frequently for me, **concurrent** execution of multiple, **non related** proccesses.
+Messing around `*nix`, a need arises frequently for me, **concurrent** execution of multiple, **non related** proccesses.
 
 Each one must be launched with their *own parameters* and directed to their *own custom log* Files.
 
 Umm ... Just use a  `bash` Script *you idiot* :neckbeard: ...
 
-Well, that was my First approach and It worked *nicely* ...  but the code was *kind of ugly and cumbersome* .. not to mention It's relative poor performance.
+Well, that was my first approach and worked *nicely* ...  but the code was *kind of ugly and cumbersome* .. not to mention It's relative poor performance.
 
-During my **Go** learning journey I read this [**article**](https://blog.golang.org/pipelines) that Came to my Mind Naturally when trying to solve this task.
+During my **Go** learning journey I read this [**article**](https://blog.golang.org/pipelines) that came to my mind naturally when trying to solve this task.
 
 Based on that knowledge I built my own tool `gcpex`.
 
 :point_right: **Note**: Only [`stdlib`](https://golang.org/pkg/#stdlib) packages and **just** one [`source`](https://github.com/klashxx/gcpex/blob/master/main.go) file used.
 
 ## Demo
+
 [![demo][asciicast-png]][asciicast-url]
 
 ## Tell me about the installation
 
-Obviously you need [`go`](https://golang.org/doc/install) in your machine.
+Obviously you need [`go`](https://golang.org/doc/install) installed in your machine.
 
 Then just:
 
 ```bash
-$ go get -v github.com/klashxx/gcpex
+
+go get -v github.com/klashxx/gcpex
+
 ````
 
 And the executable will be compiled and placed in your `$GOPATH/bin` directory.
 
-```
+```bash
+
 $ which gcpex
-/Users/klashxx/Documents/dev/go/bin/gcpex
+~/Documents/dev/go/bin/gcpex
+
 ```
 
 Easy enough :sunglasses:
@@ -54,11 +60,11 @@ The syntax is neat:
 ```bash
 $ gcpex
   -in string
-    	cmd JSON file repo. [mandatory]
+        cmd JSON file repo. [mandatory]
   -out string
-    	Respond JSON file.
+        Respond JSON file.
   -routines int
-    	max parallel execution routines (default 5)
+        max parallel execution routines (default 5)
  ```
 
 <hr>
@@ -72,7 +78,8 @@ $ gcpex
    {
     "cmd": "a_command",
     "args": ["arg1", "arg2"],
-    "log": "/my/log/path/a_command.log",
+    "log": "/stdout/log/path/a_command.log",
+    "err": "/stderr/log/path/a_command.err",
     "overwrite": true
    },
    {
@@ -85,13 +92,14 @@ $ gcpex
 
     Schema definition:
 
-  - `cmd`: Executable {**mandatory**}
-  - `args`: List of arguments to parse to the executable {optional}
-  - `log`: Path to the log File attached to `cmd`  `stdout` and `stderr`. {optional} (missed if not specified)
-  - `env`: List of environment variables to use for launch the process, if `env` is `null` it uses the current environment
-  - `overwrite`: A `bool` value, must be switched to `true` to *overwrite* a previous log File. {optional} (default = `false`)
+- `cmd`: Executable {**mandatory**}
+- `args`: List of arguments to parse to the executable {optional}
+- `log`: Path to the log File attached to `cmd` `stdout`. {optional} (missed if not specified)
+- `err`: Path to the err File attached to `cmd` `stderr`. {optional} (missed if not specified)
+- `env`: List of environment variables to use for launch the process, if `env` is `null` it uses the current environment
+- `overwrite`: A `bool` value, must be switched to `true` to *overwrite* a previous log File. {optional} (default = `false`)
 
-2. `-out`: an optional `JSON` file where the Response will be Written.
+2. `-out`: an optional `JSON` file where the *response* will be written.
 
   Format:
 
@@ -109,7 +117,8 @@ $ gcpex
     "Pid": 11111,
     "Duration": 15,
     "Errors": [],
-    "Log": "/my/log/path/a_command.log",
+    "Log": "/stdout/log/path/a_command.log",
+    "Err": "/stderr/log/path/a_command.err",
     "Overwrite": true
   },
   {
@@ -126,6 +135,7 @@ $ gcpex
       "/non_existent/commands.out: file base dir does not exists"
     ],
     "Log": "/non_existent/commands.out",
+    "Err": "",
     "Overwrite": false
   }
   ]
@@ -133,18 +143,19 @@ $ gcpex
 
   Schema definition:
 
-  - `Cmd`: Full path to the cmd executed
-  - `Path`: Dir path to executable.
-  - `Env`: List of environment variables used to launch the process.
-  - `Args`: List of arguments parsed to the executable.
-  - `Success`: A `bool` value, will be `true` when `cmd` exit code is 0.
-  - `Pid`: [*Process Identification Number*](http://www.linfo.org/pid.html) during the execution. Zero when process fails.
-  - `Duration`: Number of seconds exec took to complete.
-  - `Errors`: List of errors presented during the execution.
-  - `Log`: File used to store `stdout` and `stderr`.
-  - `Overwrite`: À `bool` flag, when `true` allowed to overwrite a previous Log file.
+- `Cmd`: Full path to the cmd executed
+- `Path`: Dir path to executable.
+- `Env`: List of environment variables used to launch the process.
+- `Args`: List of arguments parsed to the executable.
+- `Success`: A `bool` value, will be `true` when `cmd` exit code is 0.
+- `Pid`: [*Process Identification Number*](http://www.linfo.org/pid.html) during the execution. Zero when process fails.
+- `Duration`: Number of seconds exec took to complete.
+- `Errors`: List of errors presented during the execution.
+- `Log`: Path to file used to store `stdout`.
+- `Err`: Path to file used to store `stderr`.
+- `Overwrite`: À `bool` flag, when `true` allowed to overwrite a previous Log file.
 
-3. `-routines`: number of *routines* to *digester* the commands stored in our `JSON` `-in` File.
+3. `-routines`: number of *routines* to *digester* the commands stored in our `JSON` `-in` file.
 
 <hr>
 
@@ -153,6 +164,7 @@ $ gcpex
 Having this [`commands_01.json`](https://github.com/klashxx/gcpex/blob/master/samples/commands_01.json) file:
 
 ```json
+
 [
   {
   "cmd": "echo",
@@ -160,8 +172,9 @@ Having this [`commands_01.json`](https://github.com/klashxx/gcpex/blob/master/sa
  },
  {
   "cmd": "ls",
-  "args": ["-w"],
-  "log": "/tmp/ls.out"
+  "args": ["-j"],
+  "log": "/tmp/ls.out",
+  "err": "/tmp/ls.err"
  },
  {
   "cmd": "sleep",
@@ -186,11 +199,13 @@ Having this [`commands_01.json`](https://github.com/klashxx/gcpex/blob/master/sa
   "log": "/non_existent/commands.out"
  }
 ]
+
 ```
 
 Using two routines to *digester* and storing the result in `reponse.json`:
 
 ```bash
+
 $ gcpex -in commands_01.json -routines 2 -out response.json
 2017/02/03 00:12:46 Start -> Cmd: echo          Args: 5               Pid:  8845
 2017/02/03 00:12:46 Start -> Cmd: ls            Args: -j              Pid:  8846
@@ -207,42 +222,33 @@ $ gcpex -in commands_01.json -routines 2 -out response.json
 2017/02/03 00:12:51 Final -> Elapsed (seconds): 0005                  Executions (tot/ok/ko): 007 / 004 / 003
 $ echo $?
 1
+
 ```
 
 Log of `ls` command:
 
-```
+```bash
+
 $ cat /tmp/ls.out
-STDOUT:
-=======
-
-<nil>
-
-STDERR:
-=======
-
+$ cat /tmp/ls.err
 ls: illegal option -- j
 usage: ls [-ABCFGHLOPRSTUWabcdefghiklmnopqrstuwx1] [file ...]
+
 ```
 
 Log of `echo` excution:
 
-```
-$ cat /tmp/commands.out
-STDOUT:
-=======
+```bash
 
+$ cat /tmp/commands.out
 Lorem ipsum dolor sit amet ,consectetur adipiscing elit,  sed do eiusmod tempor incididunt ut labore et dolore magna aliqua
 
-STDERR:
-=======
-
-<nil>
 ```
 
 Content of the result file `response.json`:
 
 ```json
+
 [
 {
   "Cmd": "echo",
@@ -256,6 +262,7 @@ Content of the result file `response.json`:
   "Duration": 0,
   "Errors": null,
   "Log": "",
+  "Err": "",
   "Overwrite": false
 },
 {
@@ -272,6 +279,7 @@ Content of the result file `response.json`:
     "exit status 1"
   ],
   "Log": "/tmp/ls.out",
+  "Err": "/tmp/ls.err",
   "Overwrite": false
 },
 {
@@ -286,6 +294,7 @@ Content of the result file `response.json`:
   "Duration": 5,
   "Errors": null,
   "Log": "",
+  "Err": "",
   "Overwrite": false
 },
 {
@@ -300,6 +309,7 @@ Content of the result file `response.json`:
   "Duration": 5,
   "Errors": null,
   "Log": "",
+  "Err": "",
   "Overwrite": false
 },
 {
@@ -316,6 +326,7 @@ Content of the result file `response.json`:
     "exec: \"dummy02\": executable file not found in $PATH"
   ],
   "Log": "",
+  "Err": "",
   "Overwrite": false
 },
 {
@@ -332,6 +343,7 @@ Content of the result file `response.json`:
     "/non_existent/commands.out: file base dir does not exists"
   ],
   "Log": "/non_existent/commands.out",
+  "Err": "",
   "Overwrite": false
 },
 {
@@ -346,17 +358,21 @@ Content of the result file `response.json`:
   "Duration": 0,
   "Errors": null,
   "Log": "/tmp/commands.out",
+  "Err": "",
   "Overwrite": false
 }
 ]
+
 ```
+
 <hr>
 
-### Nice? Let's try Another one ....
+### Nice? Let's try Another one ...
 
 Suppose a [`commands_02.json`](https://github.com/klashxx/gcpex/blob/master/samples/commands_02.json) file with **30** `sleep 5` *processes*:
 
 ```json
+
 [
  {
   "cmd": "sleep",
@@ -368,16 +384,17 @@ Suppose a [`commands_02.json`](https://github.com/klashxx/gcpex/blob/master/samp
  },
  ...
  ]
- ```
+
+```
 
 Add **so on** ....
 
 :checkered_flag: **Fact**: A sequential process would take **150 seconds** to complete.
 
+Let's to use Ten **simultaneous** routines to do our *job*:
 
-Let's to use Ten **simultaneous** routines to do our Job:
+```bash
 
-```
 $ gcpex -in commands_02.json -routines 10
 2017/02/03 00:03:53 Start -> Cmd: sleep         Args: 5     Pid:  7961
 2017/02/03 00:03:53 Start -> Cmd: sleep         Args: 5     Pid:  7960
@@ -440,6 +457,7 @@ $ gcpex -in commands_02.json -routines 10
 2017/02/03 00:04:08 End   -> Cmd: sleep         Args: 5     Pid:  7988 Success: true  Elapsed: 0005
 2017/02/03 00:04:08 End   -> Cmd: sleep         Args: 5     Pid:  7989 Success: true  Elapsed: 0005
 2017/02/03 00:04:08 Final -> Elapsed (seconds): 0015        Executions (tot/ok/ko): 030 / 030 / 000
+
 ```
 
 As expected the total execution time is 15 seconds.
@@ -448,7 +466,8 @@ Now ... We're going to use the :horse_racing: *Calvary*.
 
 **Thirty routines** in action:
 
-```
+```bash
+
 $ gcpex -in commands_02.json -routines 30
 2017/02/03 00:05:39 Start -> Cmd: sleep         Args: 5     Pid:  8102
 2017/02/03 00:05:39 Start -> Cmd: sleep         Args: 5     Pid:  8104
@@ -511,11 +530,13 @@ $ gcpex -in commands_02.json -routines 30
 2017/02/03 00:05:45 End   -> Cmd: sleep         Args: 5     Pid:  8130 Success: true  Elapsed: 0005
 2017/02/03 00:05:45 End   -> Cmd: sleep         Args: 5     Pid:  8131 Success: true  Elapsed: 0005
 2017/02/03 00:05:45 Final -> Elapsed (seconds): 0005        Executions (tot/ok/ko): 030 / 030 / 000
+
 ```
 
 Again... the result **makes sense**, the program *took five seconds* to process it all.
 
 ## Licensing
+
 **gcpex** is licensed under the MIT License. See [LICENSE](https://github.com/klashxx/gcpex/blob/master/LICENSE) for the full license text.
 
 ## Contact me
