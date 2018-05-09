@@ -29,6 +29,7 @@ type Execution struct {
 	Duration  int
 	Errors    []string
 	Log       string
+	Err       string
 	Overwrite bool
 }
 
@@ -39,6 +40,7 @@ type Command struct {
 	Args      []string `json:"args"`
 	Env       []string `json:"env"`
 	Log       string   `json:"log"`
+	Err       string   `json:"err"`
 	Overwrite bool     `json:"overwrite"`
 }
 
@@ -80,16 +82,10 @@ func isUsable(pathFile string, overWrite bool) error {
 	return nil
 }
 
-func streamToFile(l *os.File, outPipe io.ReadCloser, tag string) error {
+func streamToFile(l *os.File, outPipe io.ReadCloser) error {
 	var err error
-	var buf *bytes.Buffer
 	var lock sync.Mutex
 	block := bytes.Buffer{}
-
-	if tag != "" {
-		buf = bytes.NewBufferString(tag)
-		buf.WriteTo(l)
-	}
 
 	bufC := 0
 	end := make(chan error)
@@ -119,11 +115,6 @@ func streamToFile(l *os.File, outPipe io.ReadCloser, tag string) error {
 		}
 	}
 	block.WriteTo(l)
-
-	if tag != "" && bufC == 0 {
-		buf = bytes.NewBufferString("<nil>\n")
-		buf.WriteTo(l)
-	}
 
 	if err == io.EOF {
 		return nil
@@ -173,13 +164,15 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 		var cmd *exec.Cmd
 		var stdoutPipe io.ReadCloser
 		var stderrPipe io.ReadCloser
-		var l *os.File
+		var stdoutLog *os.File
+		var stderrLog *os.File
 		var start time.Time
 
 		e.Cmd = c.Cmd
 		e.Args = c.Args
 		e.Env = c.Env
 		e.Log = c.Log
+		e.Err = c.Err
 		e.Overwrite = c.Overwrite
 
 		strArgs := strings.Join(e.Args, " ")
@@ -196,13 +189,26 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 				if err != nil {
 					e.Errors = append(e.Errors, err.Error())
 				} else {
-					l, err = os.Create(e.Log)
+					stdoutLog, err = os.Create(e.Log)
 					if err != nil {
 						e.Errors = append(e.Errors, err.Error())
 					}
-					defer func(l *os.File) { l.Close() }(l)
+					defer func(stdoutLog *os.File) { stdoutLog.Close() }(stdoutLog)
 				}
 			}
+			if e.Err != "" {
+				err = isUsable(e.Err, e.Overwrite)
+				if err != nil {
+					e.Errors = append(e.Errors, err.Error())
+				} else {
+					stderrLog, err = os.Create(e.Err)
+					if err != nil {
+						e.Errors = append(e.Errors, err.Error())
+					}
+					defer func(stderrLog *os.File) { stderrLog.Close() }(stderrLog)
+				}
+			}
+
 		}
 
 		if len(e.Errors) == 0 {
@@ -213,11 +219,15 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 				if err != nil {
 					e.Errors = append(e.Errors, err.Error())
 				}
+			}
+
+			if e.Err != "" {
 				stderrPipe, err = cmd.StderrPipe()
 				if err != nil {
 					e.Errors = append(e.Errors, err.Error())
 				}
 			}
+
 		}
 
 		if len(e.Errors) == 0 {
@@ -233,15 +243,19 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 			log.Printf("Start -> Cmd: %-13s Args: %-15s Pid: %5d\n", e.Cmd, strArgs, e.Pid)
 
 			if e.Log != "" {
-				err = streamToFile(l, stdoutPipe, "STDOUT:\n=======\n\n")
-				if err != nil {
-					e.Errors = append(e.Errors, err.Error())
-				}
-				err = streamToFile(l, stderrPipe, "\nSTDERR:\n=======\n\n")
+				err = streamToFile(stdoutLog, stdoutPipe)
 				if err != nil {
 					e.Errors = append(e.Errors, err.Error())
 				}
 			}
+
+			if e.Err != "" {
+				err = streamToFile(stderrLog, stderrPipe)
+				if err != nil {
+					e.Errors = append(e.Errors, err.Error())
+				}
+			}
+
 		}
 
 		if len(e.Errors) == 0 {
