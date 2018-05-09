@@ -63,7 +63,6 @@ func init() {
 }
 
 func isUsable(pathFile string, overWrite bool) error {
-
 	_, err := os.Stat(pathFile)
 	if os.IsExist(err) && !overWrite {
 		return fmt.Errorf("file %s exists", pathFile)
@@ -78,7 +77,6 @@ func isUsable(pathFile string, overWrite bool) error {
 	if os.IsPermission(err) {
 		return fmt.Errorf("%s: not enough permissions over base file directory", pathFile)
 	}
-
 	return nil
 }
 
@@ -95,6 +93,19 @@ func getLogHandler(log string, ow bool) (handler *os.File, err error) {
 	defer func(handler *os.File) { handler.Close() }(handler)
 
 	return handler, nil
+}
+
+func deserializeJSON(inJSON string) (c Commands, err error) {
+	rawJSON, err := ioutil.ReadFile(inJSON)
+	if err != nil {
+		return c, err
+	}
+
+	err = json.Unmarshal(rawJSON, &c)
+	if err != nil {
+		return c, err
+	}
+	return c, nil
 }
 
 func streamToFile(l *os.File, outPipe io.ReadCloser) error {
@@ -135,20 +146,6 @@ func streamToFile(l *os.File, outPipe io.ReadCloser) error {
 		return nil
 	}
 	return err
-}
-
-func deserializeJSON(inJSON string) (c Commands, err error) {
-	rawJSON, err := ioutil.ReadFile(inJSON)
-	if err != nil {
-		return c, err
-	}
-
-	err = json.Unmarshal(rawJSON, &c)
-	if err != nil {
-		return c, err
-	}
-
-	return c, nil
 }
 
 func dispatchCommands(done <-chan struct{}, c Commands) (<-chan Command, <-chan error) {
@@ -229,7 +226,6 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 					e.Errors = append(e.Errors, err.Error())
 				}
 			}
-
 		}
 
 		if len(e.Errors) == 0 {
@@ -264,15 +260,15 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 			err = cmd.Wait()
 			if err != nil {
 				e.Errors = append(e.Errors, err.Error())
-			} else {
-				e.Duration = int(time.Since(start).Seconds())
-				e.Success = cmd.ProcessState.Success()
-				log.Printf("End   -> Cmd: %-13s Args: %-15s Pid: %5d Success: %-5s Elapsed: %04d\n", e.Cmd, strArgs, e.Pid, strconv.FormatBool(e.Success), e.Duration)
 			}
 		}
 
 		if len(e.Errors) > 0 {
 			log.Printf("ERROR -> Cmd: %-13s Args: %-15s Err: %s\n", e.Cmd, strArgs, strings.Join(e.Errors, ", "))
+		} else {
+			e.Duration = int(time.Since(start).Seconds())
+			e.Success = cmd.ProcessState.Success()
+			log.Printf("End   -> Cmd: %-13s Args: %-15s Pid: %5d Success: %-5s Elapsed: %04d\n", e.Cmd, strArgs, e.Pid, strconv.FormatBool(e.Success), e.Duration)
 		}
 
 		select {
@@ -284,7 +280,6 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 }
 
 func responseProcessor(outJSON string, executions <-chan Execution) (cont int, fail int) {
-
 	var err error
 	var fJ *os.File
 	var prep []byte
@@ -349,7 +344,6 @@ func responseProcessor(outJSON string, executions <-chan Execution) (cont int, f
 }
 
 func controller(c Commands, outJSON string) error {
-
 	done := make(chan struct{})
 	defer close(done)
 
