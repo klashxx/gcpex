@@ -82,6 +82,21 @@ func isUsable(pathFile string, overWrite bool) error {
 	return nil
 }
 
+func getLogHandler(log string, ow bool) (handler *os.File, err error) {
+	err = isUsable(log, ow)
+	if err != nil {
+		return handler, err
+	}
+
+	handler, err = os.Create(log)
+	if err != nil {
+		return handler, err
+	}
+	defer func(handler *os.File) { handler.Close() }(handler)
+
+	return handler, nil
+}
+
 func streamToFile(l *os.File, outPipe io.ReadCloser) error {
 	var err error
 	var lock sync.Mutex
@@ -183,35 +198,22 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 		}
 
 		if len(e.Errors) == 0 {
-			e.Path = filepath.Clean(path)
 			if e.Log != "" {
-				err = isUsable(e.Log, e.Overwrite)
+				stdoutLog, err = getLogHandler(e.Log, e.Overwrite)
 				if err != nil {
 					e.Errors = append(e.Errors, err.Error())
-				} else {
-					stdoutLog, err = os.Create(e.Log)
-					if err != nil {
-						e.Errors = append(e.Errors, err.Error())
-					}
-					defer func(stdoutLog *os.File) { stdoutLog.Close() }(stdoutLog)
 				}
 			}
 			if e.Err != "" {
-				err = isUsable(e.Err, e.Overwrite)
+				stderrLog, err = getLogHandler(e.Err, e.Overwrite)
 				if err != nil {
 					e.Errors = append(e.Errors, err.Error())
-				} else {
-					stderrLog, err = os.Create(e.Err)
-					if err != nil {
-						e.Errors = append(e.Errors, err.Error())
-					}
-					defer func(stderrLog *os.File) { stderrLog.Close() }(stderrLog)
 				}
 			}
-
 		}
 
 		if len(e.Errors) == 0 {
+			e.Path = filepath.Clean(path)
 			cmd = exec.Command(e.Cmd, e.Args...)
 
 			if e.Log != "" {
@@ -281,37 +283,11 @@ func commandDigester(done <-chan struct{}, commands <-chan Command, executions c
 	}
 }
 
-func controller(c Commands, outJSON string) error {
-
-	done := make(chan struct{})
-	defer close(done)
-
-	commands, errc := dispatchCommands(done, c)
-
-	start := time.Now()
-
-	var wg sync.WaitGroup
-	wg.Add(routines)
-
-	executions := make(chan Execution)
-
-	for i := 0; i < routines; i++ {
-		go func() {
-			commandDigester(done, commands, executions)
-			wg.Done()
-		}()
-	}
-
-	go func() {
-		wg.Wait()
-		close(executions)
-	}()
+func responseProcessor(outJSON string, executions <-chan Execution) (cont int, fail int) {
 
 	var err error
 	var fJ *os.File
 	var prep []byte
-	var cont int
-	var fail int
 
 	bString := []byte("[\n")
 	sString := []byte(",\n")
@@ -368,6 +344,38 @@ func controller(c Commands, outJSON string) error {
 			log.Println("Error when writing JSON ", outJSON, ": ", err.Error())
 		}
 	}
+
+	return cont, fail
+}
+
+func controller(c Commands, outJSON string) error {
+
+	done := make(chan struct{})
+	defer close(done)
+
+	commands, errc := dispatchCommands(done, c)
+
+	start := time.Now()
+	var err error
+
+	var wg sync.WaitGroup
+	wg.Add(routines)
+
+	executions := make(chan Execution)
+
+	for i := 0; i < routines; i++ {
+		go func() {
+			commandDigester(done, commands, executions)
+			wg.Done()
+		}()
+	}
+
+	go func() {
+		wg.Wait()
+		close(executions)
+	}()
+
+	cont, fail := responseProcessor(outJSON, executions)
 
 	if err = <-errc; err != nil {
 		log.Println(err)
