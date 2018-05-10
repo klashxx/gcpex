@@ -537,7 +537,7 @@ Again... the result **makes sense**, the program *took five seconds* to process 
 
 ## Licensing
 
-**gcpex** is licensed under the MIT License. See [LICENSE](https://github.com/klashxx/gcpex/blob/master/LICENSE) for the full license text.
+**gcpex** is licensed under the MIT [license](https://github.com/klashxx/gcpex/blob/master/LICENSE).
 
 ## Contact me
 
