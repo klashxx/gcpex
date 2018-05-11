@@ -97,7 +97,7 @@ $ gcpex
 - `log`: Path to the log File attached to `cmd` `stdout`. {optional} (missed if not specified)
 - `err`: Path to the err File attached to `cmd` `stderr`. {optional} (missed if not specified)
 - `env`: List of environment variables to use for launch the process, if `env` is `null` it uses the current environment
-- `overwrite`: Must be switched to `true` (`bool` value) to *overwrite* a previous log file. {optional} (default = `false`)
+- `overwrite`: Must be switched to `true` (`bool` value) to *overwrite* a previous *log* and/or *err* file. {optional} (default = `false`)
 
 2. `-out`: an optional `JSON` file where the *response* will be written.
 
@@ -153,7 +153,7 @@ $ gcpex
 - `Errors`: List of errors presented during the execution.
 - `Log`: Path to file used to store `stdout`.
 - `Err`: Path to file used to store `stderr`.
-- `Overwrite`: À `bool` flag, when `true` allowed to overwrite a previous Log file.
+- `Overwrite`: A `bool` flag, allows *Log* and *Err* overwriting (when `true`).
 
 3. `-routines`: number of *routines* to *digester* the commands stored in our `JSON` `-in` file.
 
