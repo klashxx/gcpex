@@ -97,7 +97,7 @@ $ gcpex
 - `log`: Path to the log File attached to `cmd` `stdout`. {optional} (missed if not specified)
 - `err`: Path to the err File attached to `cmd` `stderr`. {optional} (missed if not specified)
 - `env`: List of environment variables to use for launch the process, if `env` is `null` it uses the current environment
-- `overwrite`: A `bool` value, must be switched to `true` to *overwrite* a previous log File. {optional} (default = `false`)
+- `overwrite`: Must be switched to `true` (`bool` value) to *overwrite* a previous log file. {optional} (default = `false`)
 
 2. `-out`: an optional `JSON` file where the *response* will be written.
 
